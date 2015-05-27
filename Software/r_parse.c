@@ -171,7 +171,7 @@ int jxr_read_image_bitstream(jxr_image_t image, FILE*fd)
     image->level_idc = 255;
 
     int64_t subsequent_bytes = _jxr_rbitstream_intVLW(&bits);
-    DEBUG(" Subsequent bytes with %ld bytes\n", subsequent_bytes);
+    DBG(" Subsequent bytes with %ld bytes\n", subsequent_bytes);
     if (subsequent_bytes > 0) {
       int64_t read_bytes = 0;
       if (subsequent_bytes >= 4) {
@@ -201,20 +201,20 @@ int jxr_read_image_bitstream(jxr_image_t image, FILE*fd)
       fprintf(stderr,"*** WARNING: image level not indicated correctly ***\n");
     }
 
-    DEBUG("MARK HERE as the tile base. bitpos=%zu\n", _jxr_rbitstream_bitpos(&bits));
+    DBG("MARK HERE as the tile base. bitpos=%zu\n", _jxr_rbitstream_bitpos(&bits));
     _jxr_rbitstream_mark(&bits);
 
     /* The image data is in a TILE element even if there is no
     tiling. No tiling just means 1 big tile. */
     rc = r_TILE(image, &bits);
 
-    DEBUG("Consumed %zu bytes of the bitstream\n", bits.read_count);
+    DBG("Consumed %zu bytes of the bitstream\n", bits.read_count);
 
 #ifdef VERIFY_16BIT
     if(image->lwf_test == 0)
-        DEBUG("Meet conditions for LONG_WORD_FLAG == 0!");
+        DBG("Meet conditions for LONG_WORD_FLAG == 0!");
     else {
-        DEBUG("Don't meet conditions for LONG_WORD_FLAG == 0!");
+        DBG("Don't meet conditions for LONG_WORD_FLAG == 0!");
         if (LONG_WORD_FLAG(image) == 0)
             return JXR_EC_BADFORMAT;
     }
@@ -272,7 +272,7 @@ int jxr_init_read_stripe_bitstream(jxr_image_t image, FILE *fd)
   image->level_idc = 255;
   
   int64_t subsequent_bytes = _jxr_rbitstream_intVLW(&image->rbits);
-  DEBUG(" Subsequent bytes with %ld bytes\n", subsequent_bytes);
+  DBG(" Subsequent bytes with %ld bytes\n", subsequent_bytes);
   if (subsequent_bytes > 0) {
     int64_t read_bytes = r_PROFILE_LEVEL_INFO(image,&image->rbits);
     int64_t additional_bytes = subsequent_bytes - read_bytes;
@@ -291,7 +291,7 @@ int jxr_init_read_stripe_bitstream(jxr_image_t image, FILE *fd)
   rc = jxr_test_LEVEL_IDC(image, 1);
   if (rc < 0) return rc;
   
-  DEBUG("MARK HERE as the tile base. bitpos=%zu\n", _jxr_rbitstream_bitpos(&image->rbits));
+  DBG("MARK HERE as the tile base. bitpos=%zu\n", _jxr_rbitstream_bitpos(&image->rbits));
   _jxr_rbitstream_mark(&image->rbits);
 
   /*
@@ -323,7 +323,7 @@ int jxr_test_LONG_WORD_FLAG(jxr_image_t image, int flag)
 {
 #ifdef VERIFY_16BIT
     if (flag == 0 && image->lwf_test != 0) {
-        DEBUG("Using LONG_WORD_FLAG decoder but did not meet LONG_WORD_FLAG == 0 conditions!");
+        DBG("Using LONG_WORD_FLAG decoder but did not meet LONG_WORD_FLAG == 0 conditions!");
         return JXR_EC_BADFORMAT;
     }
     else 
@@ -332,7 +332,7 @@ int jxr_test_LONG_WORD_FLAG(jxr_image_t image, int flag)
     
 }
 
-#if defined(DETAILED_DEBUG)
+#if defined(DETAILED_DBG)
 static const char*bitdepth_names[16] = {
     "BD1WHITE1", "BD8", "BD16", "BD16S",
     "BD16F", "RESERVED5", "BD32S", "BD32F",
@@ -357,17 +357,17 @@ static int r_image_header(jxr_image_t image, struct rbitstream*str)
         }
     }
 
-    DEBUG("Got magic number.\n");
-    DEBUG("START IMAGE_HEADER (bitpos=%zu)\n", _jxr_rbitstream_bitpos(str));
+    DBG("Got magic number.\n");
+    DBG("START IMAGE_HEADER (bitpos=%zu)\n", _jxr_rbitstream_bitpos(str));
 
     /* Get the version info */
     version_info = _jxr_rbitstream_uint4(str);
 
     image->disableTileOverlapFlag = _jxr_rbitstream_uint1(str);
-    DEBUG("  disableTileOverlapFlag: %d\n", image->disableTileOverlapFlag);
+    DBG("  disableTileOverlapFlag: %d\n", image->disableTileOverlapFlag);
 
     version_sub_info = _jxr_rbitstream_uint3(str); // reservedC
-    DEBUG("  Version: %u.%u\n", version_info, version_sub_info);
+    DBG("  Version: %u.%u\n", version_info, version_sub_info);
 
     /* Read some of the flags as a group. There are a bunch of
     small flag values together here, so it is economical to
@@ -390,18 +390,18 @@ static int r_image_header(jxr_image_t image, struct rbitstream*str)
     else 
         assert(ALPHACHANNEL_FLAG(image) == 0);
 
-    DEBUG(" Flags group1=0x%02x\n", image->header_flags1);
-    DEBUG(" Flags group2=0x%02x\n", image->header_flags2);
-    DEBUG(" OUTPUT_CLR_FMT=%d\n", SOURCE_CLR_FMT(image));
-    DEBUG(" OUTPUT_BITDEPTH=%d (%s)\n", SOURCE_BITDEPTH(image), bitdepth_names[SOURCE_BITDEPTH(image)]);
+    DBG(" Flags group1=0x%02x\n", image->header_flags1);
+    DBG(" Flags group2=0x%02x\n", image->header_flags2);
+    DBG(" OUTPUT_CLR_FMT=%d\n", SOURCE_CLR_FMT(image));
+    DBG(" OUTPUT_BITDEPTH=%d (%s)\n", SOURCE_BITDEPTH(image), bitdepth_names[SOURCE_BITDEPTH(image)]);
 
     /* Get the configured image dimensions. */
     if (SHORT_HEADER_FLAG(image)) {
-        DEBUG(" SHORT_HEADER_FLAG=true\n");
+        DBG(" SHORT_HEADER_FLAG=true\n");
         image->width1 = _jxr_rbitstream_uint16(str);
         image->height1 = _jxr_rbitstream_uint16(str);
     } else {
-        DEBUG(" SHORT_HEADER_FLAG=false\n");
+        DBG(" SHORT_HEADER_FLAG=false\n");
         image->width1 = _jxr_rbitstream_uint32(str);
         image->height1 = _jxr_rbitstream_uint32(str);
     }
@@ -410,7 +410,7 @@ static int r_image_header(jxr_image_t image, struct rbitstream*str)
     assert(image->width1 + 1 == image->container_width);
     assert(image->height1 + 1 == image->container_height);
 
-    DEBUG(" Image dimensions: %u x %u\n", image->width1+1, image->height1+1);
+    DBG(" Image dimensions: %u x %u\n", image->width1+1, image->height1+1);
 
     assert(image->tile_row_height == 0);
     assert(image->tile_column_width == 0);
@@ -418,7 +418,7 @@ static int r_image_header(jxr_image_t image, struct rbitstream*str)
     if (jxr_get_TILING_FLAG(image)) {
         image->tile_columns = _jxr_rbitstream_uint12(str) + 1;
         image->tile_rows = _jxr_rbitstream_uint12(str) + 1;
-        DEBUG(" TILING %u columns, %u rows (bitpos=%zu)\n",
+        DBG(" TILING %u columns, %u rows (bitpos=%zu)\n",
             image->tile_columns, image->tile_rows,
             _jxr_rbitstream_bitpos(str));
 
@@ -429,7 +429,7 @@ static int r_image_header(jxr_image_t image, struct rbitstream*str)
         entire image. */
         image->tile_columns = 1;
         image->tile_rows = 1;
-        DEBUG(" NO TILING\n");
+        DBG(" NO TILING\n");
     }
 
     /* Collect the widths of the tile columns. All but the last
@@ -496,7 +496,7 @@ static int r_image_header(jxr_image_t image, struct rbitstream*str)
             image->window_extra_right = 0;
         else
             image->window_extra_right = 16 - ((image->width1 + 1) % 16);
-        DEBUG(" NO WINDOWING\n");
+        DBG(" NO WINDOWING\n");
     }
     image->extended_width = image->width1 + 1 + image->window_extra_left + image->window_extra_right;
     image->extended_height = image->height1 + 1 + image->window_extra_top + image->window_extra_bottom;
@@ -509,15 +509,15 @@ static int r_image_header(jxr_image_t image, struct rbitstream*str)
     image->tile_row_height[image->tile_rows-1] = (image->extended_height >> 4)-hei_sum;
     image->tile_row_position[image->tile_rows-1] = hei_sum;
 
-#if defined(DETAILED_DEBUG)
-    DEBUG(" Tile widths:");
+#if defined(DETAILED_DBG)
+    DBG(" Tile widths:");
     for (idx = 0 ; idx < image->tile_columns ; idx += 1)
-        DEBUG(" %u", image->tile_column_width[idx]);
-    DEBUG("\n");
-    DEBUG(" Tile heights:");
+        DBG(" %u", image->tile_column_width[idx]);
+    DBG("\n");
+    DBG(" Tile heights:");
     for (idx = 0 ; idx < image->tile_rows ; idx += 1)
-        DEBUG(" %u", image->tile_row_height[idx]);
-    DEBUG("\n");
+        DBG(" %u", image->tile_row_height[idx]);
+    DBG("\n");
 #endif
 
     /* Perform some checks */
@@ -533,13 +533,13 @@ static int r_image_header(jxr_image_t image, struct rbitstream*str)
     }
     assert(image->extended_height % 16 == 0);
 
-    DEBUG("END IMAGE_HEADER (%zu bytes)\n", str->read_count);
+    DBG("END IMAGE_HEADER (%zu bytes)\n", str->read_count);
     return 0;
 }
 
 static int r_image_plane_header(jxr_image_t image, struct rbitstream*str, int alpha)
 {
-    DEBUG("START IMAGE_PLANE_HEADER (bitpos=%zu)\n", _jxr_rbitstream_bitpos(str));
+    DBG("START IMAGE_PLANE_HEADER (bitpos=%zu)\n", _jxr_rbitstream_bitpos(str));
 
     /* NOTE: The "use_clr_fmt" is the encoded color format, and is
     not necessarily the same as the image color format
@@ -555,9 +555,9 @@ static int r_image_plane_header(jxr_image_t image, struct rbitstream*str, int al
     if (alpha)
         assert(image->use_clr_fmt == 0);
 
-    DEBUG(" INTERNAL_CLR_FMT = %d\n", image->use_clr_fmt);
-    DEBUG(" SCALED_FLAG = %s\n", image->scaled_flag? "true" : "false");
-    DEBUG(" BANDS_PRESENT = %d\n", image->bands_present);
+    DBG(" INTERNAL_CLR_FMT = %d\n", image->use_clr_fmt);
+    DBG(" SCALED_FLAG = %s\n", image->scaled_flag? "true" : "false");
+    DBG(" BANDS_PRESENT = %d\n", image->bands_present);
 
     uint16_t num_components;
     switch (image->use_clr_fmt) {
@@ -646,16 +646,16 @@ static int r_image_plane_header(jxr_image_t image, struct rbitstream*str, int al
         case 3: /* BD16S */
         case 6: /* BD32S */
             image->shift_bits = _jxr_rbitstream_uint8(str); /* SHIFT_BITS */
-            DEBUG(" SHIFT_BITS = %u\n", image->shift_bits);
+            DBG(" SHIFT_BITS = %u\n", image->shift_bits);
             break;
         case 7: /* BD32F */
             image->len_mantissa = _jxr_rbitstream_uint8(str); /* LEN_MANTISSA */
             image->exp_bias = _jxr_rbitstream_uint8(str); /* EXP_BIAS */
-            DEBUG(" LEN_MANTISSA = %u\n", image->len_mantissa);
-            DEBUG(" EXP_BIAS = %u\n", image->exp_bias);
+            DBG(" LEN_MANTISSA = %u\n", image->len_mantissa);
+            DBG(" EXP_BIAS = %u\n", image->exp_bias);
             break;
         default: /* RESERVED */
-            DEBUG(" XXXX Inexplicable SOURCE_BITDEPTH=%u\n", SOURCE_BITDEPTH(image));
+            DBG(" XXXX Inexplicable SOURCE_BITDEPTH=%u\n", SOURCE_BITDEPTH(image));
             break;
     }
 
@@ -665,7 +665,7 @@ static int r_image_plane_header(jxr_image_t image, struct rbitstream*str, int al
     the image are suppressed. Note that per macroblock, there
     is only 1 DC value, so only 1 DC QP is needed. */
     image->dc_frame_uniform = _jxr_rbitstream_uint1(str);
-    DEBUG(" DC_FRAME_UNIFORM = %s\n", image->dc_frame_uniform?"true":"false");
+    DBG(" DC_FRAME_UNIFORM = %s\n", image->dc_frame_uniform?"true":"false");
     if (image->dc_frame_uniform) {
         _jxr_r_DC_QP(image, str);
     }
@@ -678,7 +678,7 @@ static int r_image_plane_header(jxr_image_t image, struct rbitstream*str, int al
         _jxr_rbitstream_uint1(str); /* RESERVED_I_BIT */
 
         image->lp_frame_uniform = _jxr_rbitstream_uint1(str);
-        DEBUG(" LP_FRAME_UNIFORM = %s\n", image->lp_frame_uniform?"true":"false");
+        DBG(" LP_FRAME_UNIFORM = %s\n", image->lp_frame_uniform?"true":"false");
         if (image->lp_frame_uniform) {
             image->num_lp_qps = 1;
             _jxr_r_LP_QP(image, str);
@@ -688,7 +688,7 @@ static int r_image_plane_header(jxr_image_t image, struct rbitstream*str, int al
             _jxr_rbitstream_uint1(str); /* RESERVED_J_BIT */
 
             image->hp_frame_uniform = _jxr_rbitstream_uint1(str);
-            DEBUG(" HP_FRAME_UNIFORM = %s\n", image->hp_frame_uniform?"true":"false");
+            DBG(" HP_FRAME_UNIFORM = %s\n", image->hp_frame_uniform?"true":"false");
             if (image->hp_frame_uniform) {
                 image->num_hp_qps = 1;
                 r_HP_QP(image, str);
@@ -698,7 +698,7 @@ static int r_image_plane_header(jxr_image_t image, struct rbitstream*str, int al
     }
 
     _jxr_rbitstream_syncbyte(str);
-    DEBUG("END IMAGE_PLANE_HEADER (%zd bytes, bitpos=%zu)\n",
+    DBG("END IMAGE_PLANE_HEADER (%zd bytes, bitpos=%zu)\n",
         str->read_count - save_count, _jxr_rbitstream_bitpos(str));
 
     return 0;
@@ -720,12 +720,12 @@ int _jxr_r_DC_QP(jxr_image_t image, struct rbitstream*str)
     unsigned idx;
 
     int ch_mode = get_ch_mode(image, str);
-    DEBUG(" DC_QP CH_MODE=%d ", ch_mode);
+    DBG(" DC_QP CH_MODE=%d ", ch_mode);
 
     switch (ch_mode) {
         case 0: /* UNIFORM */
             image->dc_quant_ch[0] = _jxr_rbitstream_uint8(str);
-            DEBUG(" DC_QUANT UNIFORM =%u", image->dc_quant_ch[0]);
+            DBG(" DC_QUANT UNIFORM =%u", image->dc_quant_ch[0]);
             for (idx = 1 ; idx < image->num_channels ; idx += 1)
                 image->dc_quant_ch[idx] = image->dc_quant_ch[0];
             break;
@@ -736,13 +736,13 @@ int _jxr_r_DC_QP(jxr_image_t image, struct rbitstream*str)
 	    for (idx = 2 ; idx < image->num_channels ; idx += 1) {
 	      image->dc_quant_ch[idx] = image->dc_quant_ch[1];
 	    }
-            DEBUG(" DC_QUANT SEPARATE Y=%u, Chr=%u", image->dc_quant_ch[0],image->dc_quant_ch[1]);
+            DBG(" DC_QUANT SEPARATE Y=%u, Chr=%u", image->dc_quant_ch[0],image->dc_quant_ch[1]);
             break;
         case 2: /* INDEPENDENT */
             assert(image->num_channels <= MAX_CHANNELS);
             for (idx = 0 ; idx < image->num_channels ; idx += 1) {
                 image->dc_quant_ch[idx] = _jxr_rbitstream_uint8(str);
-                DEBUG(" DC_QUANT INDEPENDENT[%d] = %u", idx, image->dc_quant_ch[idx]);
+                DBG(" DC_QUANT INDEPENDENT[%d] = %u", idx, image->dc_quant_ch[idx]);
             }
             break;
         case 3: /* Reserved */
@@ -751,7 +751,7 @@ int _jxr_r_DC_QP(jxr_image_t image, struct rbitstream*str)
             assert(0);
             break;
     }
-    DEBUG("\n");
+    DBG("\n");
 
     return 0;
 }
@@ -763,27 +763,27 @@ int _jxr_r_LP_QP(jxr_image_t image, struct rbitstream*str)
     for (q = 0 ; q < image->num_lp_qps ; q += 1) {
         unsigned idx;
         int ch_mode = get_ch_mode(image, str);
-        DEBUG(" LP_QP[%u] CH_MODE=%d LP_QUANT=", q, ch_mode);
+        DBG(" LP_QP[%u] CH_MODE=%d LP_QUANT=", q, ch_mode);
 
         switch (ch_mode) {
             case 0: /* UNIFORM */
                 image->lp_quant_ch[0][q] = _jxr_rbitstream_uint8(str);
-                DEBUG("%d", image->lp_quant_ch[0][q]);
+                DBG("%d", image->lp_quant_ch[0][q]);
                 for (idx = 1 ; idx < image->num_channels ; idx += 1)
                     image->lp_quant_ch[idx][q] = image->lp_quant_ch[0][q];
                 break;
             case 1: /* SEPARATE */
                 image->lp_quant_ch[0][q] = _jxr_rbitstream_uint8(str);
                 image->lp_quant_ch[1][q] = _jxr_rbitstream_uint8(str);
-                DEBUG("SEPARATE Y=%d Chr=%d", image->lp_quant_ch[0][q], image->lp_quant_ch[1][q]);
+                DBG("SEPARATE Y=%d Chr=%d", image->lp_quant_ch[0][q], image->lp_quant_ch[1][q]);
                 for (idx = 2 ; idx < image->num_channels ; idx += 1)
                     image->lp_quant_ch[idx][q] = image->lp_quant_ch[1][q];
                 break;
             case 2: /* INDEPENDENT */
-                DEBUG("INDEPENDENT =");
+                DBG("INDEPENDENT =");
                 for (idx = 0 ; idx < image->num_channels ; idx += 1) {
                     image->lp_quant_ch[idx][q] = _jxr_rbitstream_uint8(str);
-                    DEBUG(" %d", image->lp_quant_ch[idx][q]);
+                    DBG(" %d", image->lp_quant_ch[idx][q]);
                 }
                 break;
             case 3: /* Reserved */
@@ -792,7 +792,7 @@ int _jxr_r_LP_QP(jxr_image_t image, struct rbitstream*str)
                 assert(0);
                 break;
         }
-        DEBUG("\n");
+        DBG("\n");
     }
 
     return 0;
@@ -805,27 +805,27 @@ static int r_HP_QP(jxr_image_t image, struct rbitstream*str)
     for (q = 0 ; q < image->num_hp_qps ; q += 1) {
         unsigned idx;
         int ch_mode = get_ch_mode(image, str);
-        DEBUG("HP_QP[%u] CH_MODE: %d ", q, ch_mode);
+        DBG("HP_QP[%u] CH_MODE: %d ", q, ch_mode);
 
         switch (ch_mode) {
             case 0: /* UNIFORM */
                 image->HP_QUANT_Y[q] = _jxr_rbitstream_uint8(str);
-                DEBUG("UNIFORM %d", image->hp_quant_ch[0][q]);
+                DBG("UNIFORM %d", image->hp_quant_ch[0][q]);
                 for (idx = 1 ; idx < image->num_channels ; idx += 1)
                     image->hp_quant_ch[idx][q] = image->hp_quant_ch[0][q];
                 break;
             case 1: /* SEPARATE */
                 image->HP_QUANT_Y[q] = _jxr_rbitstream_uint8(str);
                 image->hp_quant_ch[1][q] = _jxr_rbitstream_uint8(str);
-                DEBUG("SEPARATE Y=%d Chr=%d", image->hp_quant_ch[0][q], image->hp_quant_ch[1][q]);
+                DBG("SEPARATE Y=%d Chr=%d", image->hp_quant_ch[0][q], image->hp_quant_ch[1][q]);
                 for (idx = 2 ; idx < image->num_channels ; idx += 1)
                     image->hp_quant_ch[idx][q] = image->hp_quant_ch[1][q];
                 break;
             case 2: /* INDEPENDENT */
-                DEBUG("INDEPENDENT =");
+                DBG("INDEPENDENT =");
                 for (idx = 0 ; idx < image->num_channels ; idx += 1) {
                     image->hp_quant_ch[idx][q] = _jxr_rbitstream_uint8(str);
-                    DEBUG(" %d", image->hp_quant_ch[idx][q]);
+                    DBG(" %d", image->hp_quant_ch[idx][q]);
                 }
                 break;
             case 3: /* Reserved */
@@ -834,7 +834,7 @@ static int r_HP_QP(jxr_image_t image, struct rbitstream*str)
                 assert(0);
                 break;
         }
-        DEBUG(" bitpos=%zu\n", _jxr_rbitstream_bitpos(str));
+        DBG(" bitpos=%zu\n", _jxr_rbitstream_bitpos(str));
     }
 
     return 0;
@@ -842,11 +842,11 @@ static int r_HP_QP(jxr_image_t image, struct rbitstream*str)
 
 static int r_INDEX_TABLE(jxr_image_t image, struct rbitstream*str)
 {
-    DEBUG("INDEX_TABLE START bitpos=%zu\n", _jxr_rbitstream_bitpos(str));
+    DBG("INDEX_TABLE START bitpos=%zu\n", _jxr_rbitstream_bitpos(str));
     if (INDEXTABLE_PRESENT_FLAG(image)) {
         uint8_t s0 = _jxr_rbitstream_uint8(str);
         uint8_t s1 = _jxr_rbitstream_uint8(str);
-        DEBUG(" STARTCODE = 0x%02x 0x%02x\n", s0, s1);
+        DBG(" STARTCODE = 0x%02x 0x%02x\n", s0, s1);
         if (s0 != 0x00 || s1 != 0x01)
             return JXR_EC_ERROR;
 
@@ -871,16 +871,16 @@ static int r_INDEX_TABLE(jxr_image_t image, struct rbitstream*str)
 
         assert(image->tile_index_table == 0);
         image->tile_index_table = (int64_t*)calloc(num_index_table_entries, sizeof(int64_t));
-        DEBUG(" INDEX_TABLE has %d table entries\n", num_index_table_entries);
+        DBG(" INDEX_TABLE has %d table entries\n", num_index_table_entries);
 
         for (idx = 0 ; idx < num_index_table_entries ; idx += 1) {
             int64_t off = _jxr_rbitstream_intVLW(str);
-            DEBUG(" ... %ld\n", off);
+            DBG(" ... %ld\n", off);
             image->tile_index_table[idx] = off;
         }
     }
 
-    DEBUG("INTEX_TABLE DONE bitpos=%zu\n", _jxr_rbitstream_bitpos(str));
+    DBG("INTEX_TABLE DONE bitpos=%zu\n", _jxr_rbitstream_bitpos(str));
     return 0;
 }
 
@@ -893,9 +893,9 @@ static int64_t r_PROFILE_LEVEL_INFO(jxr_image_t image, struct rbitstream*str)
     int64_t last;
     for (last = 0 ; last == 0 ; last = last_flag) {
         image->profile_idc = _jxr_rbitstream_uint8(str); /* PROFILE_IDC */
-        DEBUG(" Profile signaled in file %ld bytes\n", image->profile_idc);
+        DBG(" Profile signaled in file %ld bytes\n", image->profile_idc);
         image->level_idc = _jxr_rbitstream_uint8(str); /* LEVEL_IDC */
-        DEBUG(" Level signaled in file %ld bytes\n", image->level_idc);
+        DBG(" Level signaled in file %ld bytes\n", image->level_idc);
         reserved_l = _jxr_rbitstream_uint15(str); /* RESERVED_L */
         last_flag = _jxr_rbitstream_uint1(str); /* LAST_FLAG */
         num_bytes += 4;
@@ -1137,9 +1137,9 @@ RET:
 void _jxr_r_TILE_HEADER_DC(jxr_image_t image, struct rbitstream*str,
                            int alpha_flag, unsigned tx, unsigned ty)
 {
-    DEBUG(" TILE_HEADER_DC START bitpos=%zu\n", _jxr_rbitstream_bitpos(str));
+    DBG(" TILE_HEADER_DC START bitpos=%zu\n", _jxr_rbitstream_bitpos(str));
     if (image->dc_frame_uniform == 0) {
-        DEBUG(" TILE_HEADER_DC: parse non-uniform DC_QP\n");
+        DBG(" TILE_HEADER_DC: parse non-uniform DC_QP\n");
         _jxr_r_DC_QP(image, str);
         memcpy(image->tile_quant[ty*(image->tile_columns) + tx ].dc_quant_ch, image->dc_quant_ch, MAX_CHANNELS);
     }
@@ -1149,14 +1149,14 @@ void _jxr_r_TILE_HEADER_LOWPASS(jxr_image_t image, struct rbitstream*str,
                                 int alpha_flag,
                                 unsigned tx, unsigned ty)
 {
-    DEBUG(" TILE_HEADER_LOWPASS START bitpos=%zu\n", _jxr_rbitstream_bitpos(str));
+    DBG(" TILE_HEADER_LOWPASS START bitpos=%zu\n", _jxr_rbitstream_bitpos(str));
     if (image->lp_frame_uniform == 0) {
         image->lp_use_dc_qp = _jxr_rbitstream_uint1(str);
-        DEBUG(" TILE_HEADER_LP: parse non-uniform LP_QP: USE_DC_QP=%u\n",
+        DBG(" TILE_HEADER_LP: parse non-uniform LP_QP: USE_DC_QP=%u\n",
             image->lp_use_dc_qp);
         if (image->lp_use_dc_qp == 0) {
             image->num_lp_qps = _jxr_rbitstream_uint4(str) + 1;
-            DEBUG(" TILE_HEADER_LP: NUM_LP_QPS = %d\n", image->num_lp_qps);
+            DBG(" TILE_HEADER_LP: NUM_LP_QPS = %d\n", image->num_lp_qps);
             _jxr_r_LP_QP(image, str);
             memcpy(image->tile_quant[ty*(image->tile_columns) + tx].lp_quant_ch, image->lp_quant_ch, MAX_CHANNELS*MAX_LP_QPS);
         }
@@ -1180,12 +1180,12 @@ void _jxr_r_TILE_HEADER_HIGHPASS(jxr_image_t image, struct rbitstream*str,
 {
     if (image->hp_frame_uniform == 0) {
         image->hp_use_lp_qp = _jxr_rbitstream_uint1(str);
-        DEBUG(" TILE_HEADER_HP: parse non-uniform HP_QP: USE_LP_QP=%u\n",
+        DBG(" TILE_HEADER_HP: parse non-uniform HP_QP: USE_LP_QP=%u\n",
             image->hp_use_lp_qp);
 
         if (image->hp_use_lp_qp == 0) {
             image->num_hp_qps = _jxr_rbitstream_uint4(str) + 1;
-            DEBUG(" TILE_HEADER_HIGHPASS: NUM_HP_QPS = %d\n", image->num_hp_qps);
+            DBG(" TILE_HEADER_HIGHPASS: NUM_HP_QPS = %d\n", image->num_hp_qps);
             r_HP_QP(image, str);
             memcpy(image->tile_quant[ty*(image->tile_columns) + tx].hp_quant_ch, image->hp_quant_ch, MAX_CHANNELS*MAX_HP_QPS);
         }
@@ -1233,11 +1233,11 @@ void _jxr_r_MB_DC(jxr_image_t image, struct rbitstream*str,
     lap_mean[0] = 0;
     lap_mean[1] = 0;
 
-    DEBUG(" MB_DC tile=[%u %u] mb=[%u %u] bitpos=%zu\n",
+    DBG(" MB_DC tile=[%u %u] mb=[%u %u] bitpos=%zu\n",
         tx, ty, mx, my, _jxr_rbitstream_bitpos(str));
 
     if (_jxr_InitContext(image, tx, ty, mx, my)) {
-        DEBUG(" MB_DC: Initialize Context\n");
+        DBG(" MB_DC: Initialize Context\n");
         _jxr_InitVLCTable(image, AbsLevelIndDCLum);
         _jxr_InitVLCTable(image, AbsLevelIndDCChr);
         _jxr_InitializeModelMB(&image->model_dc, 0/*DC*/);
@@ -1250,7 +1250,7 @@ void _jxr_r_MB_DC(jxr_image_t image, struct rbitstream*str,
             int m = (idx == 0)? 0 : 1;
             int model_bits = image->model_dc.bits[m];
             unsigned is_dc_ch = _jxr_rbitstream_uint1(str);
-            DEBUG(" MB_DC: IS_DC_CH=%u, model_bits=%d\n",
+            DBG(" MB_DC: IS_DC_CH=%u, model_bits=%d\n",
                 is_dc_ch, model_bits);
             if (is_dc_ch) {
                 lap_mean[m] += 1;
@@ -1260,7 +1260,7 @@ void _jxr_r_MB_DC(jxr_image_t image, struct rbitstream*str,
                 is_dc_ch);
 
             MACROBLK_CUR_DC(image,idx,tx, mx) = dc_val;
-            DEBUG(" dc_val at t=[%u %u], m=[%u %u] == %d (0x%08x)\n",
+            DBG(" dc_val at t=[%u %u], m=[%u %u] == %d (0x%08x)\n",
                 tx, ty, mx, my, (int32_t)dc_val, dc_val);
         }
     } else {
@@ -1268,7 +1268,7 @@ void _jxr_r_MB_DC(jxr_image_t image, struct rbitstream*str,
         int is_dc_yuv = get_is_dc_yuv(str);
         int model_bits_y = image->model_dc.bits[0];
         int model_bits_uv = image->model_dc.bits[1];
-        DEBUG(" MB_DC: IS_DC_YUV=0x%x, model_bits[0]=%d, model_bits[1]=%d\n",
+        DBG(" MB_DC: IS_DC_YUV=0x%x, model_bits[0]=%d, model_bits[1]=%d\n",
             is_dc_yuv, model_bits_y, model_bits_uv);
 
         if (is_dc_yuv&4)
@@ -1292,20 +1292,20 @@ void _jxr_r_MB_DC(jxr_image_t image, struct rbitstream*str,
         MACROBLK_CUR_DC(image,0,tx, mx) = dc_val_y;
         MACROBLK_CUR_DC(image,1,tx, mx) = dc_val_u;
         MACROBLK_CUR_DC(image,2,tx, mx) = dc_val_v;
-        DEBUG(" dc_val at t=[%u %u], m=[%u %u] == %d (0x%08x), %d (0x%08x), %d (0x%08x)\n",
+        DBG(" dc_val at t=[%u %u], m=[%u %u] == %d (0x%08x), %d (0x%08x), %d (0x%08x)\n",
             tx, ty, mx, my, (int)dc_val_y, dc_val_y, (int)dc_val_u, dc_val_u, (int)dc_val_v, dc_val_v);
     }
 
     /* */
-    DEBUG(" MB_DC: UpdateModelMB: lap_mean={%u %u}\n", lap_mean[0], lap_mean[1]);
+    DBG(" MB_DC: UpdateModelMB: lap_mean={%u %u}\n", lap_mean[0], lap_mean[1]);
     _jxr_UpdateModelMB(image, lap_mean, &image->model_dc, 0/*DC*/);
     if (_jxr_ResetContext(image, tx, mx)) {
-        DEBUG(" MB_DC: Reset Context\n");
+        DBG(" MB_DC: Reset Context\n");
         /* AdaptDC */
         _jxr_AdaptVLCTable(image, AbsLevelIndDCLum);
         _jxr_AdaptVLCTable(image, AbsLevelIndDCChr);
     }
-    DEBUG(" MB_DC DONE tile=[%u %u] mb=[%u %u]\n", tx, ty, mx, my);
+    DBG(" MB_DC DONE tile=[%u %u] mb=[%u %u]\n", tx, ty, mx, my);
 }
 
 /*
@@ -1361,11 +1361,11 @@ void _jxr_r_MB_LP(jxr_image_t image, struct rbitstream*str,
     lap_mean[0] = 0;
     lap_mean[1] = 0;
 
-    DEBUG(" MB_LP tile=[%u %u] mb=[%u %u] bitpos=%zu\n",
+    DBG(" MB_LP tile=[%u %u] mb=[%u %u] bitpos=%zu\n",
         tx, ty, mx, my, _jxr_rbitstream_bitpos(str));
 
     if (_jxr_InitContext(image, tx, ty, mx, my)) {
-        DEBUG(" Init contexts\n");
+        DBG(" Init contexts\n");
         _jxr_InitializeCountCBPLP(image);
         _jxr_InitLPVLC(image);
         _jxr_InitializeAdaptiveScanLP(image);
@@ -1388,7 +1388,7 @@ void _jxr_r_MB_LP(jxr_image_t image, struct rbitstream*str,
     int cbplp = 0;
     /* if CLR_FMT is YUV420, YUV422 or YUV444... */
     if (image->use_clr_fmt==1 || image->use_clr_fmt==2 || image->use_clr_fmt==3) {
-        DEBUG(" MB_LP: Calculate YUV CBP using CountZeroCBPLP=%d, CountMaxCBPLP=%d bitpos=%zu\n",
+        DBG(" MB_LP: Calculate YUV CBP using CountZeroCBPLP=%d, CountMaxCBPLP=%d bitpos=%zu\n",
             image->count_zero_CBPLP, image->count_max_CBPLP, _jxr_rbitstream_bitpos(str));
         int max = full_planes * 4 - 5;
         if (image->count_zero_CBPLP <= 0 || image->count_max_CBPLP < 0) {
@@ -1412,7 +1412,7 @@ void _jxr_r_MB_LP(jxr_image_t image, struct rbitstream*str,
         }
     }
 
-    DEBUG(" MB_LP: cbplp = 0x%x (full_planes=%u)\n", cbplp, full_planes);
+    DBG(" MB_LP: cbplp = 0x%x (full_planes=%u)\n", cbplp, full_planes);
 
     int ndx;
     for (ndx = 0 ; ndx < full_planes ; ndx += 1) {
@@ -1420,7 +1420,7 @@ void _jxr_r_MB_LP(jxr_image_t image, struct rbitstream*str,
         const int chroma_flag = ndx>0? 1 : 0;
         int num_nonzero = 0;
 
-        DEBUG(" MB_LP: process full_plane %u, CBPLP for plane=%d, bitpos=%zu\n",
+        DBG(" MB_LP: process full_plane %u, CBPLP for plane=%d, bitpos=%zu\n",
             ndx, (cbplp>>ndx)&1, _jxr_rbitstream_bitpos(str));
         if ((cbplp>>ndx) & 1) {
             /* If the CBPLP bit is set for this plane, then we
@@ -1439,7 +1439,7 @@ void _jxr_r_MB_LP(jxr_image_t image, struct rbitstream*str,
 
             num_nonzero = r_DECODE_BLOCK(image, str,
                 chroma_flag, RLCoeffs, 1/*LP*/, location);
-            DEBUG(" : num_nonzero = %d\n", num_nonzero);
+            DBG(" : num_nonzero = %d\n", num_nonzero);
             assert(num_nonzero <= 16);
 
             if ((image->use_clr_fmt==1 || image->use_clr_fmt==2) && chroma_flag) {
@@ -1472,19 +1472,19 @@ void _jxr_r_MB_LP(jxr_image_t image, struct rbitstream*str,
                         remap = transpose422[remap];
                     LPInput[plane][remap] = temp[k];
                 }
-#if defined(DEBUG)
+#if defined(DBG)
                 {
                     int k;
-                    DEBUG(" RLCoeffs[ndx=%d] ==", ndx);
+                    DBG(" RLCoeffs[ndx=%d] ==", ndx);
                     for (k = 0 ; k<(num_nonzero*2); k+=2) {
-                        DEBUG(" %d/0x%x", RLCoeffs[k+0], RLCoeffs[k+1]);
+                        DBG(" %d/0x%x", RLCoeffs[k+0], RLCoeffs[k+1]);
                     }
-                    DEBUG("\n");
-                    DEBUG(" temp ==");
+                    DBG("\n");
+                    DBG(" temp ==");
                     for (k = 0 ; k<14; k+=1) {
-                        DEBUG(" 0x%x", temp[k]);
+                        DBG(" 0x%x", temp[k]);
                     }
-                    DEBUG("\n");
+                    DBG("\n");
                 }
 #endif
             } else {
@@ -1502,46 +1502,46 @@ void _jxr_r_MB_LP(jxr_image_t image, struct rbitstream*str,
             }
         }
 
-#if defined(DEBUG)
+#if defined(DBG)
         if (image->use_clr_fmt == 2/*YUV422*/) {
             int k;
-            DEBUG(" lp val[ndx=%d] before refine ==", ndx);
+            DBG(" lp val[ndx=%d] before refine ==", ndx);
             for (k = 1 ; k<8; k+=1) {
-                DEBUG(" 0x%x/0x%x", LPInput[1][k], LPInput[2][k]);
+                DBG(" 0x%x/0x%x", LPInput[1][k], LPInput[2][k]);
             }
-            DEBUG("\n");
+            DBG("\n");
 
         } else if (image->use_clr_fmt == 1/*YUV420*/) {
             int k;
-            DEBUG(" lp val[ndx=%d] before refine ==", ndx);
+            DBG(" lp val[ndx=%d] before refine ==", ndx);
             for (k = 1 ; k<4; k+=1) {
-                DEBUG(" 0x%x/0x%x", LPInput[1][k], LPInput[2][k]);
+                DBG(" 0x%x/0x%x", LPInput[1][k], LPInput[2][k]);
             }
-            DEBUG("\n");
+            DBG("\n");
 
         } else {
             int k;
-            DEBUG(" lp val[ndx=%d] before refine ==", ndx);
+            DBG(" lp val[ndx=%d] before refine ==", ndx);
             for (k = 1 ; k<16; k+=1) {
-                DEBUG(" 0x%x", LPInput[ndx][k]);
+                DBG(" 0x%x", LPInput[ndx][k]);
             }
-            DEBUG("\n");
-            DEBUG(" adapted scan order ==");
+            DBG("\n");
+            DBG(" adapted scan order ==");
             for (k = 0 ; k<15; k+=1) {
-                DEBUG(" %2d", image->lopass_scanorder[k]);
+                DBG(" %2d", image->lopass_scanorder[k]);
             }
-            DEBUG("\n");
-            DEBUG(" adapted scan totals ==");
+            DBG("\n");
+            DBG(" adapted scan totals ==");
             for (k = 0 ; k<15; k+=1) {
-                DEBUG(" %2d", image->lopass_scantotals[k]);
+                DBG(" %2d", image->lopass_scantotals[k]);
             }
-            DEBUG("\n");
+            DBG("\n");
         }
 #endif
 
         int model_bits = image->model_lp.bits[chroma_flag];
         lap_mean[chroma_flag] += num_nonzero;
-        DEBUG(" MB_LP: start refine, model_bits=%d, bitpos=%zu\n",
+        DBG(" MB_LP: start refine, model_bits=%d, bitpos=%zu\n",
             model_bits, _jxr_rbitstream_bitpos(str));
         if (model_bits) {
             static const int transpose444[16] = { 0, 4, 8,12,
@@ -1567,7 +1567,7 @@ void _jxr_r_MB_LP(jxr_image_t image, struct rbitstream*str,
                     case 2: /* YUV422 */
                         for (k=1 ; k<8; k+=1) {
                             int k_ptr = transpose422[k];
-                            DEBUG(" MP_LP: Refine LP_Input[1/2][%d] = 0x%x/0x%x bitpos=%zu\n",
+                            DBG(" MP_LP: Refine LP_Input[1/2][%d] = 0x%x/0x%x bitpos=%zu\n",
                                 k_ptr, LPInput[1][k_ptr], LPInput[2][k_ptr],
                                 _jxr_rbitstream_bitpos(str));
                             LPInput[1][k_ptr] = r_REFINE_LP(str, LPInput[1][k_ptr], model_bits);
@@ -1589,20 +1589,20 @@ void _jxr_r_MB_LP(jxr_image_t image, struct rbitstream*str,
         if (chroma_flag == 0) {
             /* All luma planes are simply copied into the macroblk. */
             int k;
-            DEBUG(" lp val ==");
+            DBG(" lp val ==");
             for (k = 1 ; k<16; k+=1) {
-                DEBUG(" 0x%x", LPInput[ndx][k]);
+                DBG(" 0x%x", LPInput[ndx][k]);
                 MACROBLK_CUR_LP(image, ndx, tx, mx, k-1) = LPInput[ndx][k];
             }
-            DEBUG("\n");
+            DBG("\n");
         } else {
             int k;
-            DEBUG(" lp val (ch=%d) ==", ndx);
+            DBG(" lp val (ch=%d) ==", ndx);
             switch (image->use_clr_fmt) {
                 case 1:/* YUV420 */
                     /* The chroma for YUV420 is interleaved. */
                     for (k = 1 ; k < 4 ; k+=1) {
-                        DEBUG(" 0x%x/0x%x", LPInput[1][k], LPInput[2][k]);
+                        DBG(" 0x%x/0x%x", LPInput[1][k], LPInput[2][k]);
                         MACROBLK_CUR_LP(image, 1, tx, mx, k-1) = LPInput[1][k];
                         MACROBLK_CUR_LP(image, 2, tx, mx, k-1) = LPInput[2][k];
                     }
@@ -1610,30 +1610,30 @@ void _jxr_r_MB_LP(jxr_image_t image, struct rbitstream*str,
                 case 2:/* YUV422 */
                     /* The chroma for YUV422 is interleaved. */
                     for (k = 1 ; k < 8 ; k+=1) {
-                        DEBUG(" 0x%x/0x%x", LPInput[1][k], LPInput[2][k]);
+                        DBG(" 0x%x/0x%x", LPInput[1][k], LPInput[2][k]);
                         MACROBLK_CUR_LP(image, 1, tx, mx, k-1) = LPInput[1][k];
                         MACROBLK_CUR_LP(image, 2, tx, mx, k-1) = LPInput[2][k];
                     }
                     break;
                 default:
                     for (k = 1 ; k < 16 ; k += 1) {
-                        DEBUG(" 0x%x", LPInput[ndx][k]);
+                        DBG(" 0x%x", LPInput[ndx][k]);
                         MACROBLK_CUR_LP(image, ndx, tx, mx, k-1) = LPInput[ndx][k];
                     }
                     break;
             }
-            DEBUG("\n");
+            DBG("\n");
         }
     }
 
-    DEBUG(" MB_LP: UpdateModelMB lap_mean={%d, %d}\n", lap_mean[0], lap_mean[1]);
+    DBG(" MB_LP: UpdateModelMB lap_mean={%d, %d}\n", lap_mean[0], lap_mean[1]);
     _jxr_UpdateModelMB(image, lap_mean, &image->model_lp, 1/*band=LP*/);
     if (_jxr_ResetContext(image, tx, mx)) {
-        DEBUG(" AdaptLP at the end of mx=%d (my=%d, ndx=%u)\n", mx, my, ndx);
+        DBG(" AdaptLP at the end of mx=%d (my=%d, ndx=%u)\n", mx, my, ndx);
         _jxr_AdaptLP(image);
     }
 
-    DEBUG(" MB_LP DONE tile=[%u %u] mb=[%u %u]\n", tx, ty, mx, my);
+    DBG(" MB_LP DONE tile=[%u %u] mb=[%u %u]\n", tx, ty, mx, my);
 }
 
 /*
@@ -1656,11 +1656,11 @@ int _jxr_r_MB_CBP(jxr_image_t image, struct rbitstream*str, int alpha_flag,
         for (idx = 0 ; idx < MAX_CHANNELS ; idx += 1)
             diff_cbp[idx] = 0;
 
-        DEBUG(" MB_CBP tile=[%u %u] mb=[%u %u] bitpos=%zu\n",
+        DBG(" MB_CBP tile=[%u %u] mb=[%u %u] bitpos=%zu\n",
             tx, ty, mx, my, _jxr_rbitstream_bitpos(str));
 
         if (_jxr_InitContext(image, tx, ty, mx, my)) {
-            DEBUG(" MB_CBP: InitContext\n");
+            DBG(" MB_CBP: InitContext\n");
             /* This happens only at the top left edge of the tile. */
             _jxr_InitCBPVLC(image);
         }
@@ -1677,7 +1677,7 @@ int _jxr_r_MB_CBP(jxr_image_t image, struct rbitstream*str, int alpha_flag,
         actual MBCBP values. */
         int chan;
         for (chan = 0 ; chan < channels ; chan += 1) {
-            DEBUG(" MB_CBP: Decode CBP for channel %d bitpos=%zu\n", chan, _jxr_rbitstream_bitpos(str));
+            DBG(" MB_CBP: Decode CBP for channel %d bitpos=%zu\n", chan, _jxr_rbitstream_bitpos(str));
             struct adaptive_vlc_s*vlc = image->vlc_table + DecNumCBP;
             int num_cbp = get_num_cbp(str, vlc);
 
@@ -1685,12 +1685,12 @@ int _jxr_r_MB_CBP(jxr_image_t image, struct rbitstream*str, int alpha_flag,
             static const int Num_CBP_Delta[5] = {0, -1, 0, 1, 1};
             vlc->discriminant += Num_CBP_Delta[num_cbp];
 
-            DEBUG(" MB_CBP: Got num_cbp=%d, start REFINE_CBP at bitpos=%zu\n",
+            DBG(" MB_CBP: Got num_cbp=%d, start REFINE_CBP at bitpos=%zu\n",
                 num_cbp, _jxr_rbitstream_bitpos(str));
 
             int cbp = r_REFINE_CBP(str, num_cbp);
 
-            DEBUG(" MB_CBP: Refined CBP=0x%x (num=%d)\n", cbp, num_cbp);
+            DBG(" MB_CBP: Refined CBP=0x%x (num=%d)\n", cbp, num_cbp);
 
             /* The cbp is a "block present" bit hask for a group of
             4 blocks. This is used to inform the loop below that
@@ -1706,7 +1706,7 @@ int _jxr_r_MB_CBP(jxr_image_t image, struct rbitstream*str, int alpha_flag,
                     continue;
 
                 vlc = image->vlc_table + DecNumBlkCBP;
-                DEBUG(" MB_CBP: block=%d Use DecNumBlkCBP table=%d, discriminant=%d, bitpos=%zu\n",
+                DBG(" MB_CBP: block=%d Use DecNumBlkCBP table=%d, discriminant=%d, bitpos=%zu\n",
                     blk, vlc->table, vlc->discriminant, _jxr_rbitstream_bitpos(str));
 
                 int num_blkcbp = get_num_blkcbp(image, str, vlc);
@@ -1723,7 +1723,7 @@ int _jxr_r_MB_CBP(jxr_image_t image, struct rbitstream*str, int alpha_flag,
                     vlc->discriminant += Num_BLKCBP_Delta9[num_blkcbp];
                 }
 
-                DEBUG(" MB_CBP: NUM_BLKCBP=%d, discriminant becomes=%d, \n",
+                DBG(" MB_CBP: NUM_BLKCBP=%d, discriminant becomes=%d, \n",
                     num_blkcbp, vlc->discriminant);
 
                 int val = num_blkcbp + 1;
@@ -1738,7 +1738,7 @@ int _jxr_r_MB_CBP(jxr_image_t image, struct rbitstream*str, int alpha_flag,
                         int val_inc = get_value_012(str);
                         val += val_inc;
                     }
-                    DEBUG(" MB_CBP: iVal=%d, CHR_CBP=%x\n", val, chr_cbp);
+                    DBG(" MB_CBP: iVal=%d, CHR_CBP=%x\n", val, chr_cbp);
                     val -= 6;
                 }
                 assert(val < 6);
@@ -1751,8 +1751,8 @@ int _jxr_r_MB_CBP(jxr_image_t image, struct rbitstream*str, int alpha_flag,
                 assert(code < 16);
                 blkcbp += out_table[code];
 
-                DEBUG(" MB_CBP: NUM_BLKCBP=%d, iCode=%d\n", num_blkcbp, code);
-                DEBUG(" MB_CBP: blkcbp=0x%x for chunk blk=%d\n", blkcbp, blk);
+                DBG(" MB_CBP: NUM_BLKCBP=%d, iCode=%d\n", num_blkcbp, code);
+                DBG(" MB_CBP: blkcbp=0x%x for chunk blk=%d\n", blkcbp, blk);
 
                 /* blkcbp is done. Now calculate the
                 diff_cbp. How this is done (and how many
@@ -1764,13 +1764,13 @@ int _jxr_r_MB_CBP(jxr_image_t image, struct rbitstream*str, int alpha_flag,
                         if (blkcbp & 0x10) {
                             int num_ch_blk = get_num_ch_blk(str);
                             int cbp_chr = r_REFINE_CBP(str, num_ch_blk+1);
-                            DEBUG(" MB_CBP: Refined CBP_U=0x%x (num=%d)\n", cbp_chr, num_ch_blk);
+                            DBG(" MB_CBP: Refined CBP_U=0x%x (num=%d)\n", cbp_chr, num_ch_blk);
                             diff_cbp[1] |= cbp_chr << (blk*4);
                         }
                         if (blkcbp & 0x20) {
                             int num_ch_blk = get_num_ch_blk(str);
                             int cbp_chr = r_REFINE_CBP(str, num_ch_blk+1);
-                            DEBUG(" MB_CBP: Refined CBP_V=0x%x (num=%d)\n", cbp_chr, num_ch_blk);
+                            DBG(" MB_CBP: Refined CBP_V=0x%x (num=%d)\n", cbp_chr, num_ch_blk);
                             diff_cbp[2] |= cbp_chr << (blk*4);
                         }
                         break;
@@ -1782,7 +1782,7 @@ int _jxr_r_MB_CBP(jxr_image_t image, struct rbitstream*str, int alpha_flag,
                             int cbp_ch_blk = get_value_012(str);
                             int cbp_chr = shift[cbp_ch_blk+1];
                             diff_cbp[1] |= cbp_chr << shift[blk];
-                            DEBUG(" MB_CBP: Refined CBP_U=0x%x (cbp_ch_blk=%d, blk=%d)\n",
+                            DBG(" MB_CBP: Refined CBP_U=0x%x (cbp_ch_blk=%d, blk=%d)\n",
                                 diff_cbp[1], cbp_ch_blk, blk);
                         }
                         if (blkcbp & 0x20) {
@@ -1790,7 +1790,7 @@ int _jxr_r_MB_CBP(jxr_image_t image, struct rbitstream*str, int alpha_flag,
                             int cbp_ch_blk = get_value_012(str);
                             int cbp_chr = shift[cbp_ch_blk+1];
                             diff_cbp[2] |= cbp_chr << shift[blk];
-                            DEBUG(" MB_CBP: Refined CBP_V=0x%x (cbp_ch_blk=%d, blk=%d)\n",
+                            DBG(" MB_CBP: Refined CBP_V=0x%x (cbp_ch_blk=%d, blk=%d)\n",
                                 diff_cbp[2], cbp_ch_blk, blk);
                         }
                         break;
@@ -1806,18 +1806,18 @@ int _jxr_r_MB_CBP(jxr_image_t image, struct rbitstream*str, int alpha_flag,
                         break;
                 }
             }
-            DEBUG(" MB_CBP: chan=%d, num_cbp=%d, cbp=0x%1x\n", chan, num_cbp, cbp);
+            DBG(" MB_CBP: chan=%d, num_cbp=%d, cbp=0x%1x\n", chan, num_cbp, cbp);
         }
 
-#if defined(DETAILED_DEBUG)
+#if defined(DETAILED_DBG)
         for (chan = 0 ; chan < image->num_channels ; chan += 1) {
-            DEBUG(" MB_CBP: diff_cbp[%d]=0x%04x\n", chan, diff_cbp[chan]);
+            DBG(" MB_CBP: diff_cbp[%d]=0x%04x\n", chan, diff_cbp[chan]);
         }
 #endif
 
         r_PredCBP(image, diff_cbp, tx, ty, mx, my);
 
-        DEBUG(" MB_CBP done tile=[%u %u] mb=[%u %u]\n", tx, ty, mx, my);
+        DBG(" MB_CBP done tile=[%u %u] mb=[%u %u]\n", tx, ty, mx, my);
         return 0;
 }
 
@@ -1873,11 +1873,11 @@ int _jxr_r_MB_HP(jxr_image_t image, struct rbitstream*str,
                  unsigned tx, unsigned ty,
                  unsigned mx, unsigned my)
 {
-    DEBUG(" MB_HP tile=[%u %u] mb=[%u %u] bitpos=%zu\n",
+    DBG(" MB_HP tile=[%u %u] mb=[%u %u] bitpos=%zu\n",
         tx, ty, mx, my, _jxr_rbitstream_bitpos(str));
 
     if (_jxr_InitContext(image, tx, ty, mx, my)) {
-        DEBUG(" MB_HP: InitContext\n");
+        DBG(" MB_HP: InitContext\n");
         /* This happens only at the top left edge of the tile. */
         _jxr_InitHPVLC(image);
         _jxr_InitializeAdaptiveScanHP(image);
@@ -1918,7 +1918,7 @@ int _jxr_r_MB_HP(jxr_image_t image, struct rbitstream*str,
         unsigned model_bits = image->model_hp.bits[chroma_flag];
         int cbp = MACROBLK_CUR_HPCBP(image, idx, tx, mx);
         int block;
-        DEBUG(" MB_HP channel=%d, cbp=0x%x, model_bits=%u MBHPMode=%d\n",
+        DBG(" MB_HP channel=%d, cbp=0x%x, model_bits=%u MBHPMode=%d\n",
             idx, cbp, model_bits, mbhp_pred_mode);
         for (block=0 ; block<(nblocks*4) ; block += 1, cbp >>= 1) {
             int bpos = block;
@@ -1930,7 +1930,7 @@ int _jxr_r_MB_HP(jxr_image_t image, struct rbitstream*str,
                 idx, bpos, mbhp_pred_mode,
                 model_bits);
             if (num_nonzero < 0) {
-                DEBUG("ERROR: r_DECODE_BLOCK_ADAPTIVE returned rc=%d\n", num_nonzero);
+                DBG("ERROR: r_DECODE_BLOCK_ADAPTIVE returned rc=%d\n", num_nonzero);
                 return JXR_EC_ERROR;
             }
             if (flex_flag)
@@ -1949,12 +1949,12 @@ int _jxr_r_MB_HP(jxr_image_t image, struct rbitstream*str,
     FREQUENCY mode, and there is a FLEXBITS pass later, then do
     *not* do the predictions, leaving them to the FLEXBITS tile. */
     if (FREQUENCY_MODE_CODESTREAM_FLAG(image) == 0 || image->bands_present == 1) {
-        DEBUG(" MB_HP: propagate hp predictions within MB_HP function\n");
+        DBG(" MB_HP: propagate hp predictions within MB_HP function\n");
         for (idx = 0 ; idx < use_num_channels ; idx += 1)
             _jxr_propagate_hp_predictions(image, idx, tx, mx, mbhp_pred_mode);
     }
 
-    DEBUG(" MP_HP: lap_mean={%u, %u}, model_hp.bits={%u %u}, model_hp.state={%d %d}\n",
+    DBG(" MP_HP: lap_mean={%u, %u}, model_hp.bits={%u %u}, model_hp.state={%d %d}\n",
         lap_mean[0], lap_mean[1],
         image->model_hp.bits[0], image->model_hp.bits[1],
         image->model_hp.state[0], image->model_hp.state[1]);
@@ -1965,16 +1965,16 @@ int _jxr_r_MB_HP(jxr_image_t image, struct rbitstream*str,
 
     _jxr_UpdateModelMB(image, lap_mean, &image->model_hp, 2/*band=HP*/);
     if (_jxr_ResetContext(image, tx, mx)) {
-        DEBUG(" MB_HP: Run AdaptHP\n");
+        DBG(" MB_HP: Run AdaptHP\n");
         _jxr_AdaptHP(image);
     }
 
-    DEBUG(" MP_HP: Updated: lap_mean={%u, %u}, model_hp.bits={%u %u}, model_hp.state={%d %d}\n",
+    DBG(" MP_HP: Updated: lap_mean={%u, %u}, model_hp.bits={%u %u}, model_hp.state={%d %d}\n",
         lap_mean[0], lap_mean[1],
         image->model_hp.bits[0], image->model_hp.bits[1],
         image->model_hp.state[0], image->model_hp.state[1]);
 
-    DEBUG(" MB_HP DONE tile=[%u %u] mb=[%u %u]\n", tx, ty, mx, my);
+    DBG(" MB_HP DONE tile=[%u %u] mb=[%u %u]\n", tx, ty, mx, my);
     return 0;
 }
 
@@ -2020,13 +2020,13 @@ static int32_t r_DEC_DC(jxr_image_t image, struct rbitstream*str,
 
     if (is_dc_ch) {
         dc_val = r_DECODE_ABS_LEVEL(image, str, 0/*DC*/, chroma_flag) -1;
-        DEBUG(" DEC_DC: DECODE_ABS_LEVEL = %u (0x%08x)\n", dc_val, dc_val);
+        DBG(" DEC_DC: DECODE_ABS_LEVEL = %u (0x%08x)\n", dc_val, dc_val);
     }
 
     /* If there are model_bits, then read them literally from the
     bitstream and use them as the LSB bits for the DC value. */
     if (model_bits > 0) {
-        DEBUG(" DEC_DC: Collect %u model_bits\n", model_bits);
+        DBG(" DEC_DC: Collect %u model_bits\n", model_bits);
         int idx;
         for (idx = 0 ; idx < model_bits ; idx += 1) {
             dc_val <<= 1;
@@ -2038,12 +2038,12 @@ static int32_t r_DEC_DC(jxr_image_t image, struct rbitstream*str,
     sign bit and apply it. */
     if (dc_val != 0) {
         int sign_flag = _jxr_rbitstream_uint1(str);
-        DEBUG(" DEC_DC: sign_flag=%s\n", sign_flag? "true":"false");
+        DBG(" DEC_DC: sign_flag=%s\n", sign_flag? "true":"false");
         if (sign_flag)
             dc_val = - dc_val;
     }
 
-    DEBUG(" DEC_DC: DC value is %d (0x%08x)\n", dc_val, dc_val);
+    DBG(" DEC_DC: DC value is %d (0x%08x)\n", dc_val, dc_val);
     return dc_val;
 }
 
@@ -2060,7 +2060,7 @@ static uint32_t r_DECODE_ABS_LEVEL(jxr_image_t image, struct rbitstream*str,
                                    int band, int chroma_flag)
 {
     int vlc_select = _jxr_vlc_select(band, chroma_flag);
-    DEBUG(" Use vlc_select = %s (table=%d) to decode level index, bitpos=%zu\n",
+    DBG(" Use vlc_select = %s (table=%d) to decode level index, bitpos=%zu\n",
         _jxr_vlc_index_name(vlc_select), image->vlc_table[vlc_select].table,
         _jxr_rbitstream_bitpos(str));
 
@@ -2068,7 +2068,7 @@ static uint32_t r_DECODE_ABS_LEVEL(jxr_image_t image, struct rbitstream*str,
     const int fixed_len[] = {0, 0, 1, 2, 2, 2};
 
     int abslevel_index = dec_abslevel_index(image, str, vlc_select);
-    DEBUG(" ABSLEVEL_INDEX = %d\n", abslevel_index);
+    DBG(" ABSLEVEL_INDEX = %d\n", abslevel_index);
 
     image->vlc_table[vlc_select].discriminant += _jxr_abslevel_index_delta[abslevel_index];
 
@@ -2086,7 +2086,7 @@ static uint32_t r_DECODE_ABS_LEVEL(jxr_image_t image, struct rbitstream*str,
             }
             level += level_ref;
         }
-        DEBUG(" ABS_LEVEL = 0x%x (fixed = %d, level_ref = %d)\n",
+        DBG(" ABS_LEVEL = 0x%x (fixed = %d, level_ref = %d)\n",
             level, fixed, level_ref);
     } else {
         int fixed = 4 + _jxr_rbitstream_uint4(str);
@@ -2106,7 +2106,7 @@ static uint32_t r_DECODE_ABS_LEVEL(jxr_image_t image, struct rbitstream*str,
             level_ref |= _jxr_rbitstream_uint1(str);
         }
         level = 2 + (1 << fixed) + level_ref;
-        DEBUG(" ABS_LEVEL = 0x%x (fixed = %d, level_ref = %d)\n",
+        DBG(" ABS_LEVEL = 0x%x (fixed = %d, level_ref = %d)\n",
             level, fixed, level_ref);
     }
 
@@ -2122,7 +2122,7 @@ static uint32_t r_DECODE_ABS_LEVEL(jxr_image_t image, struct rbitstream*str,
 int r_DECODE_BLOCK(jxr_image_t image, struct rbitstream*str,
                    int chroma_flag, int coeff[32], int band, int location)
 {
-    DEBUG(" DECODE_BLOCK chroma_flag=%d, band=%d, location=%d bitpos=%zu\n",
+    DBG(" DECODE_BLOCK chroma_flag=%d, band=%d, location=%d bitpos=%zu\n",
         chroma_flag, band, location, _jxr_rbitstream_bitpos(str));
     int num_nz = 1;
 
@@ -2135,7 +2135,7 @@ int r_DECODE_BLOCK(jxr_image_t image, struct rbitstream*str,
     */
     int index = r_DECODE_FIRST_INDEX(image, str, chroma_flag, band);
 
-    DEBUG(" first index=0x%x\n", index);
+    DBG(" first index=0x%x\n", index);
 
     int sr = index & 1;
     int srn = index >> 2;
@@ -2163,8 +2163,8 @@ int r_DECODE_BLOCK(jxr_image_t image, struct rbitstream*str,
         coeff[0] = r_DECODE_RUN(image, str, 15-location);
     }
 
-    DEBUG(" coeff[0] = %d (run)\n", coeff[0]);
-    DEBUG(" coeff[1] = 0x%x (coeff)\n", coeff[1]);
+    DBG(" coeff[0] = %d (run)\n", coeff[0]);
+    DBG(" coeff[1] = 0x%x (coeff)\n", coeff[1]);
 
     location += coeff[0] + 1;
 
@@ -2178,7 +2178,7 @@ int r_DECODE_BLOCK(jxr_image_t image, struct rbitstream*str,
             coeff[num_nz*2] = r_DECODE_RUN(image, str, 15-location);
         }
 
-        DEBUG(" coeff[%d*2+0] = %d (run)\n", num_nz, coeff[num_nz*2]);
+        DBG(" coeff[%d*2+0] = %d (run)\n", num_nz, coeff[num_nz*2]);
 
         location += coeff[num_nz*2] + 1;
 
@@ -2192,7 +2192,7 @@ int r_DECODE_BLOCK(jxr_image_t image, struct rbitstream*str,
         * and certain restricted tables are used.
         */
         index = r_DECODE_INDEX(image, str, location, chroma_flag, band, context);
-        DEBUG(" next index=0x%x\n", index);
+        DBG(" next index=0x%x\n", index);
 
         srn = index >> 1;
         context &= srn;
@@ -2208,11 +2208,11 @@ int r_DECODE_BLOCK(jxr_image_t image, struct rbitstream*str,
         if (sign_flag)
             coeff[num_nz*2+1] = -coeff[num_nz*2+1];
 
-        DEBUG(" coeff[%d*2+1] = 0x%x (coeff)\n", num_nz, coeff[num_nz*2+1]);
+        DBG(" coeff[%d*2+1] = 0x%x (coeff)\n", num_nz, coeff[num_nz*2+1]);
         num_nz += 1;
     }
 
-    DEBUG(" DECODE_BLOCK done, num_nz=%d\n", num_nz);
+    DBG(" DECODE_BLOCK done, num_nz=%d\n", num_nz);
     return num_nz;
 }
 
@@ -2457,7 +2457,7 @@ static int r_DECODE_FIRST_INDEX(jxr_image_t image, struct rbitstream*str,
     assert(first_index < 12);
     image->vlc_table[vlc_select].discriminant += FirstIndexDelta[delta_table][first_index];
     image->vlc_table[vlc_select].discriminant2 += FirstIndexDelta[delta2table][first_index];
-    DEBUG(" DECODE_FIRST_INDEX: vlc_select = %s, vlc_table = %d, deltatable/2 = %d/%d, discriminant/2 = %d/%d, first_index=%d\n",
+    DBG(" DECODE_FIRST_INDEX: vlc_select = %s, vlc_table = %d, deltatable/2 = %d/%d, discriminant/2 = %d/%d, first_index=%d\n",
         _jxr_vlc_index_name(vlc_select), vlc_table,
         delta_table, delta2table,
         image->vlc_table[vlc_select].discriminant,
@@ -2496,7 +2496,7 @@ static int r_DECODE_INDEX(jxr_image_t image, struct rbitstream*str,
     bit, that hints the run is zero or not. */
     if (location > 15) {
         index = _jxr_rbitstream_uint1(str);
-        DEBUG(" DECODE_INDEX: location=%d, index=%d\n", location, index);
+        DBG(" DECODE_INDEX: location=%d, index=%d\n", location, index);
         return index;
     }
 
@@ -2520,14 +2520,14 @@ static int r_DECODE_INDEX(jxr_image_t image, struct rbitstream*str,
             index = 1; /* 110 */
         else
             index = 3; /* 111 */
-        DEBUG(" DECODE_INDEX: location=%d, index=%d\n", location, index);
+        DBG(" DECODE_INDEX: location=%d, index=%d\n", location, index);
         return index;
     }
 
     /* For more general cases, use adaptive table selections to
     decode the full set of index possibilities. */
     int vlc_table = image->vlc_table[vlc_select].table;
-    DEBUG(" DECODE_INDEX: vlc_select = %s, vlc_table = %d chroma_flag=%d\n",
+    DBG(" DECODE_INDEX: vlc_select = %s, vlc_table = %d chroma_flag=%d\n",
         _jxr_vlc_index_name(vlc_select), vlc_table, chroma_flag);
 
     /* Table 60 is implemented in this switch. */
@@ -2655,7 +2655,7 @@ static int r_DECODE_INDEX(jxr_image_t image, struct rbitstream*str,
     image->vlc_table[vlc_select].discriminant += Index1Delta[vlc_delta][index];
     image->vlc_table[vlc_select].discriminant2+= Index1Delta[vlc_delta2][index];
 
-    DEBUG(" DECODE_INDEX: vlc_select = %s, deltatable/2 = %d/%d, discriminant/2 becomes %d/%d\n",
+    DBG(" DECODE_INDEX: vlc_select = %s, deltatable/2 = %d/%d, discriminant/2 becomes %d/%d\n",
         _jxr_vlc_index_name(vlc_select), vlc_delta, vlc_delta2,
         image->vlc_table[vlc_select].discriminant,
         image->vlc_table[vlc_select].discriminant2);
@@ -2668,7 +2668,7 @@ static int r_DECODE_RUN(jxr_image_t image, struct rbitstream*str, int max_run)
     int run = 0;
 
     if (max_run < 5) {
-        DEBUG(" DECODE_RUN max_run=%d (<5) bitpos=%zu\n",
+        DBG(" DECODE_RUN max_run=%d (<5) bitpos=%zu\n",
             max_run, _jxr_rbitstream_bitpos(str));
         switch (max_run) {
             case 1:
@@ -2716,15 +2716,15 @@ static int r_DECODE_RUN(jxr_image_t image, struct rbitstream*str, int max_run)
         else
             run_index = 3; /* 0000 */
 
-        DEBUG(" DECODE_RUN max_run=%d, RUN_INDEX=%d\n", max_run, run_index);
+        DBG(" DECODE_RUN max_run=%d, RUN_INDEX=%d\n", max_run, run_index);
 
         assert(max_run < 15);
         int index = run_index + 5*RunBin[max_run];
-        DEBUG(" DECODE_RUN index=%d\n", index);
+        DBG(" DECODE_RUN index=%d\n", index);
 
         assert(run_index < 15);
         int fixed = RunFixedLen[index];
-        DEBUG(" DECODE_RUN fixed=%d (bitpos=%zu)\n",
+        DBG(" DECODE_RUN fixed=%d (bitpos=%zu)\n",
             fixed, _jxr_rbitstream_bitpos(str));
 
         assert(run_index < 15);
@@ -2734,7 +2734,7 @@ static int r_DECODE_RUN(jxr_image_t image, struct rbitstream*str, int max_run)
         }
     }
 
-    DEBUG(" DECODE_RUN max_run=%d, run=%d\n", max_run, run);
+    DBG(" DECODE_RUN max_run=%d, run=%d\n", max_run, run);
 
     return run;
 }
@@ -2781,11 +2781,11 @@ static void r_PredCBP(jxr_image_t image, int*diff_cbp,
                 = _jxr_PredCBP420(image, diff_cbp, 1, tx, mx, my);
             MACROBLK_CUR_HPCBP(image, 2, tx, mx)
                 = _jxr_PredCBP420(image, diff_cbp, 2, tx, mx, my);
-            DEBUG(" PredCBP: Predicted HPCBP[ch=0]: 0x%04x (YUV420)\n",
+            DBG(" PredCBP: Predicted HPCBP[ch=0]: 0x%04x (YUV420)\n",
                 MACROBLK_CUR_HPCBP(image, 0, tx, mx));
-            DEBUG(" PredCBP: Predicted HPCBP[ch=1]: 0x%04x (YUV420)\n",
+            DBG(" PredCBP: Predicted HPCBP[ch=1]: 0x%04x (YUV420)\n",
                 MACROBLK_CUR_HPCBP(image, 1, tx, mx));
-            DEBUG(" PredCBP: Predicted HPCBP[ch=2]: 0x%04x (YUV420)\n",
+            DBG(" PredCBP: Predicted HPCBP[ch=2]: 0x%04x (YUV420)\n",
                 MACROBLK_CUR_HPCBP(image, 2, tx, mx));
             break;
         case 2: /*YUV422*/
@@ -2795,18 +2795,18 @@ static void r_PredCBP(jxr_image_t image, int*diff_cbp,
                 = _jxr_PredCBP422(image, diff_cbp, 1, tx, mx, my);
             MACROBLK_CUR_HPCBP(image, 2, tx, mx)
                 = _jxr_PredCBP422(image, diff_cbp, 2, tx, mx, my);
-            DEBUG(" PredCBP: Predicted HPCBP[ch=0]: 0x%04x (YUV422)\n",
+            DBG(" PredCBP: Predicted HPCBP[ch=0]: 0x%04x (YUV422)\n",
                 MACROBLK_CUR_HPCBP(image, 0, tx, mx));
-            DEBUG(" PredCBP: Predicted HPCBP[ch=1]: 0x%04x (YUV422)\n",
+            DBG(" PredCBP: Predicted HPCBP[ch=1]: 0x%04x (YUV422)\n",
                 MACROBLK_CUR_HPCBP(image, 1, tx, mx));
-            DEBUG(" PredCBP: Predicted HPCBP[ch=2]: 0x%04x (YUV422)\n",
+            DBG(" PredCBP: Predicted HPCBP[ch=2]: 0x%04x (YUV422)\n",
                 MACROBLK_CUR_HPCBP(image, 2, tx, mx));
             break;
         default:
             for (idx = 0; idx<image->num_channels; idx += 1) {
                 MACROBLK_CUR_HPCBP(image, idx, tx, mx)
                     = _jxr_PredCBP444(image, diff_cbp, idx, tx, mx, my);
-                DEBUG(" PredCBP: Predicted HPCBP[ch=%d]: 0x%04x\n",
+                DBG(" PredCBP: Predicted HPCBP[ch=%d]: 0x%04x\n",
                     idx, MACROBLK_CUR_HPCBP(image, idx, tx, mx));
             }
             break;
@@ -2866,11 +2866,11 @@ static int r_DECODE_BLOCK_ADAPTIVE(jxr_image_t image, struct rbitstream*str,
             assert(idx < 16);
             k += RLCoeffs[idx*2];
             if (k >= 16) {
-                DEBUG("ERROR: r_DECODE_BLOCK returned bogus RLCoeffs table. ch=%d, tx=%u, mx=%u, k=%d\n",
+                DBG("ERROR: r_DECODE_BLOCK returned bogus RLCoeffs table. ch=%d, tx=%u, mx=%u, k=%d\n",
                     channel, tx, mx, k);
                 for (idx = 0 ; idx < num_nonzero ; idx += 1) {
-                    DEBUG(" : RLCoeffs[%d] = %d\n", idx*2, RLCoeffs[idx*2]);
-                    DEBUG(" : RLCoeffs[%d] = 0x%x\n", idx*2+1, RLCoeffs[idx*2+1]);
+                    DBG(" : RLCoeffs[%d] = %d\n", idx*2, RLCoeffs[idx*2]);
+                    DBG(" : RLCoeffs[%d] = 0x%x\n", idx*2+1, RLCoeffs[idx*2+1]);
                 }
                 return JXR_EC_ERROR;
             }
@@ -2878,33 +2878,33 @@ static int r_DECODE_BLOCK_ADAPTIVE(jxr_image_t image, struct rbitstream*str,
             AdaptiveHPScan(image, hpinput, k, RLCoeffs[idx*2+1], mbhp_pred_mode);
             k += 1;
         }
-#if defined(DETAILED_DEBUG)
+#if defined(DETAILED_DBG)
         {
-            DEBUG(" HP val[tx=%u, mx=%d, block=%d] ==", tx, mx, block);
+            DBG(" HP val[tx=%u, mx=%d, block=%d] ==", tx, mx, block);
             for (k = 1 ; k<16; k+=1) {
-                DEBUG(" 0x%x", hpinput[k]);
+                DBG(" 0x%x", hpinput[k]);
             }
-            DEBUG("\n");
-            DEBUG(" adapted hor scan order (MBHPMode=%d) ==", mbhp_pred_mode);
+            DBG("\n");
+            DBG(" adapted hor scan order (MBHPMode=%d) ==", mbhp_pred_mode);
             for (k = 0 ; k<15; k+=1) {
-                DEBUG(" %2d", image->hipass_hor_scanorder[k]);
+                DBG(" %2d", image->hipass_hor_scanorder[k]);
             }
-            DEBUG("\n");
-            DEBUG(" adapted hor scan totals ==");
+            DBG("\n");
+            DBG(" adapted hor scan totals ==");
             for (k = 0 ; k<15; k+=1) {
-                DEBUG(" %2d", image->hipass_hor_scantotals[k]);
+                DBG(" %2d", image->hipass_hor_scantotals[k]);
             }
-            DEBUG("\n");
-            DEBUG(" adapted ver scan order (MBHPMode=%d) ==", mbhp_pred_mode);
+            DBG("\n");
+            DBG(" adapted ver scan order (MBHPMode=%d) ==", mbhp_pred_mode);
             for (k = 0 ; k<15; k+=1) {
-                DEBUG(" %2d", image->hipass_ver_scanorder[k]);
+                DBG(" %2d", image->hipass_ver_scanorder[k]);
             }
-            DEBUG("\n");
-            DEBUG(" adapted ver scan totals ==");
+            DBG("\n");
+            DBG(" adapted ver scan totals ==");
             for (k = 0 ; k<15; k+=1) {
-                DEBUG(" %2d", image->hipass_ver_scantotals[k]);
+                DBG(" %2d", image->hipass_ver_scantotals[k]);
             }
-            DEBUG("\n");
+            DBG("\n");
         }
 #endif
         if (SKIP_HP_DATA(image)) {
@@ -2931,7 +2931,7 @@ static void r_DECODE_FLEX(jxr_image_t image, struct rbitstream*str,
     int coeff = MACROBLK_CUR_HP(image, ch, tx, mx, block, k);
 
     int flex_ref = _jxr_rbitstream_uintN(str, flexbits);
-    DEBUG(" DECODE_FLEX: coeff=0x%08x, flex_ref=0x%08x\n", coeff, flex_ref);
+    DBG(" DECODE_FLEX: coeff=0x%08x, flex_ref=0x%08x\n", coeff, flex_ref);
     if (coeff > 0) {
         coeff += flex_ref << image->trim_flexbits;
     } else if (coeff < 0) {
@@ -2962,7 +2962,7 @@ static void r_BLOCK_FLEXBITS(jxr_image_t image, struct rbitstream*str,
     else
         flexbits_left -= image->trim_flexbits;
 
-    DEBUG(" BLOCK_FLEXBITS: flexbits_left=%u (model=%u, trim=%u) block=%u bitpos=%zu\n",
+    DBG(" BLOCK_FLEXBITS: flexbits_left=%u (model=%u, trim=%u) block=%u bitpos=%zu\n",
         flexbits_left, model_bits, image->trim_flexbits, bl, _jxr_rbitstream_bitpos(str));
     if (flexbits_left > 0) {
         int idx;
@@ -2971,7 +2971,7 @@ static void r_BLOCK_FLEXBITS(jxr_image_t image, struct rbitstream*str,
             r_DECODE_FLEX(image, str, tx, mx, ch, bl, idx_trans-1, flexbits_left);
         }
     }
-    DEBUG(" BLOCK_FLEXBITS done\n");
+    DBG(" BLOCK_FLEXBITS done\n");
 }
 
 static int r_calculate_mbhp_mode(jxr_image_t image, int tx, int mx)
@@ -3049,14 +3049,14 @@ void _jxr_propagate_hp_predictions(jxr_image_t image, int ch, unsigned tx, unsig
             MACROBLK_CUR_HP(image,ch,tx,mx,idx, 7) += MACROBLK_CUR_HP(image,ch,tx,mx,idx-1, 7);
             MACROBLK_CUR_HP(image,ch,tx,mx,idx,11) += MACROBLK_CUR_HP(image,ch,tx,mx,idx-1,11);
 
-#if defined(DETAILED_DEBUG)
+#if defined(DETAILED_DBG)
             {
                 int k;
-                DEBUG(" HP val predicted(l)[ch=%d, tx=%u, mx=%d, block=%d] ==", ch, tx, mx, idx);
+                DBG(" HP val predicted(l)[ch=%d, tx=%u, mx=%d, block=%d] ==", ch, tx, mx, idx);
                 for (k = 1 ; k<16; k+=1) {
-                    DEBUG(" 0x%x", MACROBLK_CUR_HP(image,ch,tx,mx,idx,k-1));
+                    DBG(" 0x%x", MACROBLK_CUR_HP(image,ch,tx,mx,idx,k-1));
                 }
-                DEBUG("\n");
+                DBG("\n");
             }
 #endif
         }
@@ -3067,14 +3067,14 @@ void _jxr_propagate_hp_predictions(jxr_image_t image, int ch, unsigned tx, unsig
             MACROBLK_CUR_HP(image,ch,tx,mx,idx,0) += MACROBLK_CUR_HP(image,ch,tx,mx, idx-4,0);
             MACROBLK_CUR_HP(image,ch,tx,mx,idx,1) += MACROBLK_CUR_HP(image,ch,tx,mx, idx-4,1);
             MACROBLK_CUR_HP(image,ch,tx,mx,idx,2) += MACROBLK_CUR_HP(image,ch,tx,mx, idx-4,2);
-#if defined(DETAILED_DEBUG)
+#if defined(DETAILED_DBG)
             {
                 int k;
-                DEBUG(" HP val predicted(t)[ch=%d, tx=%u, mx=%d, block=%d] ==", ch, tx, mx, idx);
+                DBG(" HP val predicted(t)[ch=%d, tx=%u, mx=%d, block=%d] ==", ch, tx, mx, idx);
                 for (k = 1 ; k<16; k+=1) {
-                    DEBUG(" 0x%x", MACROBLK_CUR_HP(image,ch,tx,mx,idx,k-1));
+                    DBG(" 0x%x", MACROBLK_CUR_HP(image,ch,tx,mx,idx,k-1));
                 }
-                DEBUG("\n");
+                DBG("\n");
             }
 #endif
         }
@@ -3094,18 +3094,18 @@ void _jxr_propagate_hp_predictions(jxr_image_t image, int ch, unsigned tx, unsig
                     MACROBLK_CUR_HP(image,2,tx,mx,idx,7) += MACROBLK_CUR_HP(image,2,tx,mx,idx-1,7);
                     MACROBLK_CUR_HP(image,1,tx,mx,idx,11)+= MACROBLK_CUR_HP(image,1,tx,mx,idx-1,11);
                     MACROBLK_CUR_HP(image,2,tx,mx,idx,11)+= MACROBLK_CUR_HP(image,2,tx,mx,idx-1,11);
-#if defined(DETAILED_DEBUG)
+#if defined(DETAILED_DBG)
                     int k;
-                    DEBUG(" HP val predicted(l)[ch=1, tx=%u, mx=%d, block=%d] ==", tx, mx, idx);
+                    DBG(" HP val predicted(l)[ch=1, tx=%u, mx=%d, block=%d] ==", tx, mx, idx);
                     for (k = 1 ; k<16; k+=1) {
-                        DEBUG(" 0x%x", MACROBLK_CUR_HP(image,1,tx,mx,idx,k-1));
+                        DBG(" 0x%x", MACROBLK_CUR_HP(image,1,tx,mx,idx,k-1));
                     }
-                    DEBUG("\n");
-                    DEBUG(" HP val predicted(l)[ch=2, tx=%u, mx=%d, block=%d] ==", tx, mx, idx);
+                    DBG("\n");
+                    DBG(" HP val predicted(l)[ch=2, tx=%u, mx=%d, block=%d] ==", tx, mx, idx);
                     for (k = 1 ; k<16; k+=1) {
-                        DEBUG(" 0x%x", MACROBLK_CUR_HP(image,2,tx,mx,idx,k-1));
+                        DBG(" 0x%x", MACROBLK_CUR_HP(image,2,tx,mx,idx,k-1));
                     }
-                    DEBUG("\n");
+                    DBG("\n");
 #endif
                 }
             } else if (mbhp_pred_mode == 1) {
@@ -3119,18 +3119,18 @@ void _jxr_propagate_hp_predictions(jxr_image_t image, int ch, unsigned tx, unsig
                     MACROBLK_CUR_HP(image,2,tx,mx,idx,1) += MACROBLK_CUR_HP(image,2,tx,mx,idx-2,1);
                     MACROBLK_CUR_HP(image,1,tx,mx,idx,2) += MACROBLK_CUR_HP(image,1,tx,mx,idx-2,2);
                     MACROBLK_CUR_HP(image,2,tx,mx,idx,2) += MACROBLK_CUR_HP(image,2,tx,mx,idx-2,2);
-#if defined(DETAILED_DEBUG)
+#if defined(DETAILED_DBG)
                     int k;
-                    DEBUG(" HP val predicted(t)[ch=1, tx=%u, mx=%d, block=%d] ==", tx, mx, idx);
+                    DBG(" HP val predicted(t)[ch=1, tx=%u, mx=%d, block=%d] ==", tx, mx, idx);
                     for (k = 1 ; k<16; k+=1) {
-                        DEBUG(" 0x%x", MACROBLK_CUR_HP(image,1,tx,mx,idx,k-1));
+                        DBG(" 0x%x", MACROBLK_CUR_HP(image,1,tx,mx,idx,k-1));
                     }
-                    DEBUG("\n");
-                    DEBUG(" HP val predicted(t)[ch=2, tx=%u, mx=%d, block=%d] ==", tx, mx, idx);
+                    DBG("\n");
+                    DBG(" HP val predicted(t)[ch=2, tx=%u, mx=%d, block=%d] ==", tx, mx, idx);
                     for (k = 1 ; k<16; k+=1) {
-                        DEBUG(" 0x%x", MACROBLK_CUR_HP(image,2,tx,mx,idx,k-1));
+                        DBG(" 0x%x", MACROBLK_CUR_HP(image,2,tx,mx,idx,k-1));
                     }
-                    DEBUG("\n");
+                    DBG("\n");
 #endif
                 }
             }
@@ -3149,18 +3149,18 @@ void _jxr_propagate_hp_predictions(jxr_image_t image, int ch, unsigned tx, unsig
                     MACROBLK_CUR_HP(image,2,tx,mx,idx,7) += MACROBLK_CUR_HP(image,2,tx,mx,idx-1,7);
                     MACROBLK_CUR_HP(image,1,tx,mx,idx,11)+= MACROBLK_CUR_HP(image,1,tx,mx,idx-1,11);
                     MACROBLK_CUR_HP(image,2,tx,mx,idx,11)+= MACROBLK_CUR_HP(image,2,tx,mx,idx-1,11);
-#if defined(DETAILED_DEBUG)
+#if defined(DETAILED_DBG)
                     int k;
-                    DEBUG(" HP val predicted(l)[ch=1, tx=%u, mx=%d, block=%d] ==", tx, mx, idx);
+                    DBG(" HP val predicted(l)[ch=1, tx=%u, mx=%d, block=%d] ==", tx, mx, idx);
                     for (k = 1 ; k<16; k+=1) {
-                        DEBUG(" 0x%x", MACROBLK_CUR_HP(image,1,tx,mx,idx,k-1));
+                        DBG(" 0x%x", MACROBLK_CUR_HP(image,1,tx,mx,idx,k-1));
                     }
-                    DEBUG("\n");
-                    DEBUG(" HP val predicted(l)[ch=2, tx=%u, mx=%d, block=%d] ==", tx, mx, idx);
+                    DBG("\n");
+                    DBG(" HP val predicted(l)[ch=2, tx=%u, mx=%d, block=%d] ==", tx, mx, idx);
                     for (k = 1 ; k<16; k+=1) {
-                        DEBUG(" 0x%x", MACROBLK_CUR_HP(image,2,tx,mx,idx,k-1));
+                        DBG(" 0x%x", MACROBLK_CUR_HP(image,2,tx,mx,idx,k-1));
                     }
-                    DEBUG("\n");
+                    DBG("\n");
 #endif
                 }
             } else if (mbhp_pred_mode == 1) {
@@ -3174,18 +3174,18 @@ void _jxr_propagate_hp_predictions(jxr_image_t image, int ch, unsigned tx, unsig
                     MACROBLK_CUR_HP(image,2,tx,mx,idx,1) += MACROBLK_CUR_HP(image,2,tx,mx,idx-2,1);
                     MACROBLK_CUR_HP(image,1,tx,mx,idx,2) += MACROBLK_CUR_HP(image,1,tx,mx,idx-2,2);
                     MACROBLK_CUR_HP(image,2,tx,mx,idx,2) += MACROBLK_CUR_HP(image,2,tx,mx,idx-2,2);
-#if defined(DETAILED_DEBUG)
+#if defined(DETAILED_DBG)
                     int k;
-                    DEBUG(" HP val predicted(t)[ch=1, tx=%u, mx=%d, block=%d] ==", tx, mx, idx);
+                    DBG(" HP val predicted(t)[ch=1, tx=%u, mx=%d, block=%d] ==", tx, mx, idx);
                     for (k = 1 ; k<16; k+=1) {
-                        DEBUG(" 0x%x", MACROBLK_CUR_HP(image,1,tx,mx,idx,k-1));
+                        DBG(" 0x%x", MACROBLK_CUR_HP(image,1,tx,mx,idx,k-1));
                     }
-                    DEBUG("\n");
-                    DEBUG(" HP val predicted(t)[ch=2, tx=%u, mx=%d, block=%d] ==", tx, mx, idx);
+                    DBG("\n");
+                    DBG(" HP val predicted(t)[ch=2, tx=%u, mx=%d, block=%d] ==", tx, mx, idx);
                     for (k = 1 ; k<16; k+=1) {
-                        DEBUG(" 0x%x", MACROBLK_CUR_HP(image,2,tx,mx,idx,k-1));
+                        DBG(" 0x%x", MACROBLK_CUR_HP(image,2,tx,mx,idx,k-1));
                     }
-                    DEBUG("\n");
+                    DBG("\n");
 #endif
                 }
             }
@@ -3516,7 +3516,7 @@ static int get_num_ch_blk(struct rbitstream*str)
 * Reference Software v1.5 updates.
 *
 * Revision 1.39 2008/03/24 18:06:56 steve
-* Imrpove DEBUG messages around quantization.
+* Imrpove DBG messages around quantization.
 *
 * Revision 1.38 2008/03/21 18:30:21 steve
 * Get HP Prediction right for YUVK (CMYK)

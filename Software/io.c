@@ -131,7 +131,7 @@ static int get_byte(struct rbitstream*str)
     str->bits_avail = 8;
     str->read_count += 1;
 #if 0
-    DEBUG(" in byte: 0x%02x (bitpos=%zd)\n",
+    DBG(" in byte: 0x%02x (bitpos=%zd)\n",
         str->byte, str->read_count*8-8);
 #endif
     return 0;

@@ -778,10 +778,10 @@ extern int jxr_read_image_pixelformat(jxr_container_t c);
 
 extern unsigned int isEqualGUID(unsigned char guid1[16], unsigned char guid2[16]);
 
-#if defined(DETAILED_DEBUG)
-# define DEBUG(...) fprintf(stdout, __VA_ARGS__)
+#if defined(DETAILED_DBG)
+# define DBG(...) fprintf(stdout, __VA_ARGS__)
 #else
-# define DEBUG(...) do { } while(0)
+# define DBG(...) do { } while(0)
 #endif
 
 extern const char*_jxr_vld_index_name(int vlc);

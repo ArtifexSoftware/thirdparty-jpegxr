@@ -133,7 +133,7 @@ static void dequantize_up_dclp(jxr_image_t image, int use_my, int ch)
             MACROBLK_UP_DC(image,ch,tx,mx) *= dc_quant;
             CHECK1(image->lwf_test, MACROBLK_CUR_DC(image,ch,tx,mx));
 
-            DEBUG(" Dequantize strip=%d tx=%d MBx=%d ch=%d with lp_quant=%d lp_quant_use=%d\n",
+            DBG(" Dequantize strip=%d tx=%d MBx=%d ch=%d with lp_quant=%d lp_quant_use=%d\n",
                 use_my-1, tx, mx, ch, lp_quant_raw, lp_quant_use);
             int k;
             for (k = 1 ; k < lp_coeff_count ; k += 1)
@@ -144,19 +144,19 @@ static void dequantize_up_dclp(jxr_image_t image, int use_my, int ch)
         }
     }
 
-#if defined(DETAILED_DEBUG)
+#if defined(DETAILED_DBG)
     for (tx = 0 ; tx < (int) image->tile_columns ; tx += 1) {
         int mx;
         for (mx = 0 ; mx < (int) image->tile_column_width[tx] ; mx += 1) {
             int jdx;
-            DEBUG(" DC/LP (strip=%3d, tx=%d mbx=%4d, ch=%d) Dequant:", use_my-1, tx, mx, ch);
-            DEBUG(" 0x%08x", MACROBLK_UP_DC(image,ch,tx,mx));
+            DBG(" DC/LP (strip=%3d, tx=%d mbx=%4d, ch=%d) Dequant:", use_my-1, tx, mx, ch);
+            DBG(" 0x%08x", MACROBLK_UP_DC(image,ch,tx,mx));
             for (jdx = 0; jdx < lp_coeff_count-1 ; jdx += 1) {
-                DEBUG(" 0x%08x", MACROBLK_UP_LP(image,ch,tx,mx,jdx));
+                DBG(" 0x%08x", MACROBLK_UP_LP(image,ch,tx,mx,jdx));
                 if ((jdx+1)%4 == 3 && jdx != (lp_coeff_count-2))
-                    DEBUG("\n%*s:", 48, "");
+                    DBG("\n%*s:", 48, "");
             }
-            DEBUG("\n");
+            DBG("\n");
         }
     }
 #endif
@@ -169,12 +169,12 @@ static void IPCT_level1_up1(jxr_image_t image, int use_my, int ch)
 
     dequantize_up_dclp(image, use_my, ch);
 
-    DEBUG(" DC-LP IPCT transforms (first level) for strip %d channel %d\n", use_my-1, ch);
+    DBG(" DC-LP IPCT transforms (first level) for strip %d channel %d\n", use_my-1, ch);
 
     /* Reverse transform the DC/LP to 16 DC values. */
 
     for (idx = 0 ; idx < (int) EXTENDED_WIDTH_BLOCKS(image); idx += 1) {
-        DEBUG(" DC-LP IPCT transforms for mb[%d %d]\n", idx, use_my-1);
+        DBG(" DC-LP IPCT transforms for mb[%d %d]\n", idx, use_my-1);
 
         if (ch > 0 && image->use_clr_fmt == 1/*YUV420*/) {
 
@@ -189,26 +189,26 @@ static void IPCT_level1_up1(jxr_image_t image, int use_my, int ch)
                     image->strip[ch].up1[idx].data[jdx] *= 2;
             }
 
-#if defined(DETAILED_DEBUG)
-            DEBUG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) IPCT:", use_my-1, idx, ch);
-            DEBUG(" 0x%08x", MACROBLK_UP_DC(image,ch,0,idx));
-            DEBUG(" 0x%08x", MACROBLK_UP_LP(image,ch,0,idx,0));
-            DEBUG(" 0x%08x", MACROBLK_UP_LP(image,ch,0,idx,1));
-            DEBUG(" 0x%08x", MACROBLK_UP_LP(image,ch,0,idx,2));
-            DEBUG("\n");
+#if defined(DETAILED_DBG)
+            DBG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) IPCT:", use_my-1, idx, ch);
+            DBG(" 0x%08x", MACROBLK_UP_DC(image,ch,0,idx));
+            DBG(" 0x%08x", MACROBLK_UP_LP(image,ch,0,idx,0));
+            DBG(" 0x%08x", MACROBLK_UP_LP(image,ch,0,idx,1));
+            DBG(" 0x%08x", MACROBLK_UP_LP(image,ch,0,idx,2));
+            DBG("\n");
 #endif
         } else if (ch > 0 && image->use_clr_fmt == 2/*YUV422*/) {
-#if defined(DETAILED_DEBUG)
+#if defined(DETAILED_DBG)
             int jdx;
-            DEBUG(" DC/LP scaled_flag=%d\n", image->scaled_flag);
-            DEBUG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) Pre-IPCT:", use_my-1, idx, ch);
-            DEBUG(" 0x%08x", MACROBLK_UP_DC(image,ch,0,idx));
+            DBG(" DC/LP scaled_flag=%d\n", image->scaled_flag);
+            DBG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) Pre-IPCT:", use_my-1, idx, ch);
+            DBG(" 0x%08x", MACROBLK_UP_DC(image,ch,0,idx));
             for (jdx = 0; jdx < 7 ; jdx += 1) {
-                DEBUG(" 0x%08x", MACROBLK_UP_LP(image,ch,0,idx,jdx));
+                DBG(" 0x%08x", MACROBLK_UP_LP(image,ch,0,idx,jdx));
                 if ((jdx+1)%4 == 3 && jdx != 6)
-                    DEBUG("\n%*s:", 44, "");
+                    DBG("\n%*s:", 44, "");
             }
-            DEBUG("\n");
+            DBG("\n");
 #endif
 
             _jxr_2ptT(image->strip[ch].up1[idx].data+0,
@@ -221,16 +221,16 @@ static void IPCT_level1_up1(jxr_image_t image, int use_my, int ch)
             _jxr_InvPermute2pt(image->strip[ch].up1[idx].data+5,
                 image->strip[ch].up1[idx].data+6);
 
-#if defined(DETAILED_DEBUG)
-            DEBUG(" DC/LP scaled_flag=%d\n", image->scaled_flag);
-            DEBUG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) scaled:", use_my-1, idx, ch);
-            DEBUG(" 0x%08x", MACROBLK_UP_DC(image,ch,0,idx));
+#if defined(DETAILED_DBG)
+            DBG(" DC/LP scaled_flag=%d\n", image->scaled_flag);
+            DBG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) scaled:", use_my-1, idx, ch);
+            DBG(" 0x%08x", MACROBLK_UP_DC(image,ch,0,idx));
             for (jdx = 0; jdx < 7 ; jdx += 1) {
-                DEBUG(" 0x%08x", MACROBLK_UP_LP(image,ch,0,idx,jdx));
+                DBG(" 0x%08x", MACROBLK_UP_LP(image,ch,0,idx,jdx));
                 if ((jdx+1)%4 == 3 && jdx != 6)
-                    DEBUG("\n%*s:", 42, "");
+                    DBG("\n%*s:", 42, "");
             }
-            DEBUG("\n");
+            DBG("\n");
 #endif
             /* Scale up the chroma channel */
             if (image->scaled_flag) {
@@ -239,16 +239,16 @@ static void IPCT_level1_up1(jxr_image_t image, int use_my, int ch)
                     image->strip[ch].up1[idx].data[jdx] *= 2;
             }
 
-#if defined(DETAILED_DEBUG)
-            DEBUG(" DC/LP scaled_flag=%d\n", image->scaled_flag);
-            DEBUG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) IPCT:", use_my-1, idx, ch);
-            DEBUG(" 0x%08x", MACROBLK_UP_DC(image,ch,0,idx));
+#if defined(DETAILED_DBG)
+            DBG(" DC/LP scaled_flag=%d\n", image->scaled_flag);
+            DBG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) IPCT:", use_my-1, idx, ch);
+            DBG(" 0x%08x", MACROBLK_UP_DC(image,ch,0,idx));
             for (jdx = 0; jdx < 7 ; jdx += 1) {
-                DEBUG(" 0x%08x", MACROBLK_UP_LP(image,ch,0,idx,jdx));
+                DBG(" 0x%08x", MACROBLK_UP_LP(image,ch,0,idx,jdx));
                 if ((jdx+1)%4 == 3 && jdx != 6)
-                    DEBUG("\n%*s:", 40, "");
+                    DBG("\n%*s:", 40, "");
             }
-            DEBUG("\n");
+            DBG("\n");
 #endif
         } else {
 
@@ -263,16 +263,16 @@ static void IPCT_level1_up1(jxr_image_t image, int use_my, int ch)
                     image->strip[ch].up1[idx].data[jdx] *= 2;
             }
 
-#if defined(DETAILED_DEBUG)
+#if defined(DETAILED_DBG)
             int jdx;
-            DEBUG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) IPCT:", use_my-1, idx, ch);
-            DEBUG(" 0x%08x", MACROBLK_UP_DC(image,ch,0,idx));
+            DBG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) IPCT:", use_my-1, idx, ch);
+            DBG(" 0x%08x", MACROBLK_UP_DC(image,ch,0,idx));
             for (jdx = 0; jdx < 15 ; jdx += 1) {
-                DEBUG(" 0x%08x", MACROBLK_UP_LP(image,ch,0,idx,jdx));
+                DBG(" 0x%08x", MACROBLK_UP_LP(image,ch,0,idx,jdx));
                 if ((jdx+1)%4 == 3 && jdx != 14)
-                    DEBUG("\n%*s:", 40, "");
+                    DBG("\n%*s:", 40, "");
             }
-            DEBUG("\n");
+            DBG("\n");
 #endif
         }
 
@@ -296,7 +296,7 @@ static void IPCT_level2_up2(jxr_image_t image, int use_my, int ch)
 
         dclphp_shuffle(image->strip[ch].up2[idx].data, dclp_count);
 
-        DEBUG(" DC-LP-HP IPCT transforms for (second level) strip %d MBx=%d ch=%d\n",
+        DBG(" DC-LP-HP IPCT transforms for (second level) strip %d MBx=%d ch=%d\n",
             use_my-2, idx, ch);
 
         int hp_quant_raw = MACROBLK_UP2_HP_QUANT(image,ch,0,idx);
@@ -304,20 +304,20 @@ static void IPCT_level2_up2(jxr_image_t image, int use_my, int ch)
 
         /* IPCT transform to absorb HP band data. */
         for (jdx = 0 ; jdx < 16*dclp_count ; jdx += 16) {
-#if defined(DETAILED_DEBUG)
+#if defined(DETAILED_DBG)
             {
                 int pix;
-                DEBUG(" DC-LP-HP (strip=%3d, mbx=%4d ch=%d, block=%2d) pre-IPCT:",
+                DBG(" DC-LP-HP (strip=%3d, mbx=%4d ch=%d, block=%2d) pre-IPCT:",
                     use_my-2, idx, ch, jdx/16);
                 for (pix = 0; pix < 16 ; pix += 1) {
-                    DEBUG(" 0x%08x", image->strip[ch].up2[idx].data[jdx+pix]);
+                    DBG(" 0x%08x", image->strip[ch].up2[idx].data[jdx+pix]);
                     if (pix%4 == 3 && pix != 15)
-                        DEBUG("\n%*s:", 56, "");
+                        DBG("\n%*s:", 56, "");
                 }
-                DEBUG("\n");
+                DBG("\n");
             }
 #endif
-            DEBUG(" Dequantize strip=%d MBx=%d ch=%d block=%d with hp_quant=%d (raw=%d)\n",
+            DBG(" Dequantize strip=%d MBx=%d ch=%d block=%d with hp_quant=%d (raw=%d)\n",
                 use_my-2, idx, ch, jdx/16, hp_quant, hp_quant_raw);
             int k;
             for (k = 1 ; k < 16 ; k += 1)
@@ -327,17 +327,17 @@ static void IPCT_level2_up2(jxr_image_t image, int use_my, int ch)
             }
 
             _jxr_4x4IPCT(image->strip[ch].up2[idx].data+jdx);
-#if defined(DETAILED_DEBUG)
+#if defined(DETAILED_DBG)
             {
                 int pix;
-                DEBUG(" DC-LP-HP (strip=%3d, mbx=%4d ch=%d block=%2d) IPCT:",
+                DBG(" DC-LP-HP (strip=%3d, mbx=%4d ch=%d block=%2d) IPCT:",
                     use_my-2, idx, ch, jdx/16);
                 for (pix = 0; pix < 16 ; pix += 1) {
-                    DEBUG(" 0x%08x", image->strip[ch].up2[idx].data[jdx+pix]);
+                    DBG(" 0x%08x", image->strip[ch].up2[idx].data[jdx+pix]);
                     if (pix%4 == 3 && pix != 15)
-                        DEBUG("\n%*s:", 51, "");
+                        DBG("\n%*s:", 51, "");
                 }
-                DEBUG("\n");
+                DBG("\n");
             }
 #endif
         }
@@ -910,7 +910,7 @@ static void overlap_level2_up3_444(jxr_image_t image, int use_my, int ch)
     int top_my = use_my - 3;
     int idx;
 
-    DEBUG("Overlap Level2 for row %d\n", top_my);
+    DBG("Overlap Level2 for row %d\n", top_my);
 
     int ty = 0;
     /* Figure out which tile row the current strip of macroblocks belongs to. */
@@ -1113,7 +1113,7 @@ static void overlap_level2_up3_422(jxr_image_t image, int use_my, int ch)
     int idx;
 
 
-    DEBUG("Overlap Level2 for row %d\n", top_my);
+    DBG("Overlap Level2 for row %d\n", top_my);
 
     int ty = 0;
     /* Figure out which tile row the current strip of macroblocks belongs to. */
@@ -1312,7 +1312,7 @@ static void overlap_level2_up3_420(jxr_image_t image, int use_my, int ch)
     int idx;
 
 
-    DEBUG("Overlap Level2 (YUV420) for row %d\n", top_my);
+    DBG("Overlap Level2 (YUV420) for row %d\n", top_my);
 
     int ty = 0;
 
@@ -1561,7 +1561,7 @@ static void upsample(int inbuf[], int outbuf[], int upsamplelen, int chroma_cent
     if(chroma_center == 5 || chroma_center == 6 || chroma_center == 7)
     {
         chroma_center = 0;
-        DEBUG("Treating chroma_center as 0 in upsample\n");
+        DBG("Treating chroma_center as 0 in upsample\n");
     }
 
     for (k = 0; k <= (upsamplelen - 2) / 2; k++)
@@ -2104,7 +2104,7 @@ static void scale_and_emit_top(jxr_image_t image, int tx, int use_my)
             break;
     }
 
-    DEBUG("scale_and_emit_top: scale=%d, bias=%d, round=%d, shift_bits=%d, clip_low=%d, clip_hig=%d\n",
+    DBG("scale_and_emit_top: scale=%d, bias=%d, round=%d, shift_bits=%d, clip_low=%d, clip_hig=%d\n",
         scale, bias, round, shift_bits, clip_low, clip_hig);
 
     /* Up 'til this point, the MB contains 4x4 sub-blocks. We are
@@ -2134,7 +2134,7 @@ static void scale_and_emit_top(jxr_image_t image, int tx, int use_my)
     for (idx = 0 ; idx < (int) EXTENDED_WIDTH_BLOCKS(image); idx += 1) {
 
         int ch;
-#if defined(DETAILED_DEBUG) && 1
+#if defined(DETAILED_DBG) && 1
         for (ch = 0 ; ch < image->num_channels ; ch += 1) {
             int count = 256;
             if (ch > 0 && image->use_clr_fmt==2/*YUV422*/)
@@ -2142,14 +2142,14 @@ static void scale_and_emit_top(jxr_image_t image, int tx, int use_my)
             if (ch > 0 && image->use_clr_fmt==1/*YUV420*/)
                 count = 64;
 
-            DEBUG("image yuv mx=%3d my=%3d ch=%d:", idx, use_my-3, ch);
+            DBG("image yuv mx=%3d my=%3d ch=%d:", idx, use_my-3, ch);
             int jdx;
             for (jdx = 0 ; jdx < count ; jdx += 1) {
                 if (jdx%8 == 0 && jdx != 0)
-                    DEBUG("\n%*s", 29, "");
-                DEBUG(" %08x", image->strip[ch].up3[idx].data[jdx]);
+                    DBG("\n%*s", 29, "");
+                DBG(" %08x", image->strip[ch].up3[idx].data[jdx]);
             }
-            DEBUG("\n");
+            DBG("\n");
         }
 #endif
 
@@ -2289,7 +2289,7 @@ static void scale_and_emit_top(jxr_image_t image, int tx, int use_my)
 */
 static void rflush_to_tile_buffer(jxr_image_t image, int tx, int my)
 {
-    DEBUG("rflush_mb_strip: rflush_to_tile_buffer tx=%d, my=%d\n", tx, my);
+    DBG("rflush_mb_strip: rflush_to_tile_buffer tx=%d, my=%d\n", tx, my);
 
     int format_scale = 256;
     if (image->use_clr_fmt == 2 /* YUV422 */) {
@@ -2300,7 +2300,7 @@ static void rflush_to_tile_buffer(jxr_image_t image, int tx, int my)
 
     int mx;
     for (mx = 0 ; mx < (int) image->tile_column_width[tx] ; mx += 1) {
-        DEBUG("rflush_mb_strip: rflush_to_tile_buffer tx=%d, mx=%d, CUR=0x%08x UP1=0x%08x, UP2=0x%08x, UP3=0x%08x, LP_QUANT=%d\n",
+        DBG("rflush_mb_strip: rflush_to_tile_buffer tx=%d, mx=%d, CUR=0x%08x UP1=0x%08x, UP2=0x%08x, UP3=0x%08x, LP_QUANT=%d\n",
             tx, mx, MACROBLK_CUR(image,0,tx,mx).data[0],
             MACROBLK_UP1(image,0,tx,mx).data[0],
             MACROBLK_UP2(image,0,tx,mx).data[0],
@@ -2328,7 +2328,7 @@ static void rflush_to_tile_buffer(jxr_image_t image, int tx, int my)
 */
 static void rflush_collect_mb_strip_data(jxr_image_t image, int my)
 {
-    DEBUG("rflush_mb_strip: rflush_collect_mb_strip_data my=%d\n", my);
+    DBG("rflush_mb_strip: rflush_collect_mb_strip_data my=%d\n", my);
 
     int format_scale = 256;
     if (image->use_clr_fmt == 2 /* YUV422 */) {
@@ -2352,7 +2352,7 @@ static void rflush_collect_mb_strip_data(jxr_image_t image, int my)
                 for (idx = 0 ; idx < count; idx += 1)
                     MACROBLK_CUR(image,ch,tx,mx).data[idx] = mb->data[idx];
             }
-            DEBUG("rflush_mb_strip: rflush_collect_mb_strip_data tx=%d, mx=%d, CUR=0x%08x UP1=0x%08x, UP2=0x%08x, UP3=0x%08x lp_quant=%d\n",
+            DBG("rflush_mb_strip: rflush_collect_mb_strip_data tx=%d, mx=%d, CUR=0x%08x UP1=0x%08x, UP2=0x%08x, UP3=0x%08x lp_quant=%d\n",
                 tx, mx, MACROBLK_CUR(image,0,tx,mx).data[0],
                 MACROBLK_UP1(image,0,tx,mx).data[0],
                 MACROBLK_UP2(image,0,tx,mx).data[0],
@@ -2371,7 +2371,7 @@ static void rflush_collect_mb_strip_data(jxr_image_t image, int my)
 */
 static void rflush_save_context(jxr_image_t image)
 {
-    DEBUG("rflush_mb_strip: rflush_save_context\n");
+    DBG("rflush_mb_strip: rflush_save_context\n");
 
     int format_scale = 256;
     if (image->use_clr_fmt == 2 /* YUV422 */) {
@@ -2389,7 +2389,7 @@ static void rflush_save_context(jxr_image_t image)
             int off2 = off1 + EXTENDED_WIDTH_BLOCKS(image);
             int off3 = off2 + EXTENDED_WIDTH_BLOCKS(image);
             int ch;
-            DEBUG("rflush_mb_strip: rflush_save_context tx=%d, mx=%d, CUR=0x%08x UP1=0x%08x, UP2=0x%08x, UP3=0x%08x\n",
+            DBG("rflush_mb_strip: rflush_save_context tx=%d, mx=%d, CUR=0x%08x UP1=0x%08x, UP2=0x%08x, UP3=0x%08x\n",
                 tx, mx, MACROBLK_CUR(image,0,tx,mx).data[0],
                 MACROBLK_UP1(image,0,tx,mx).data[0],
                 MACROBLK_UP2(image,0,tx,mx).data[0],
@@ -2420,7 +2420,7 @@ static void rflush_save_context(jxr_image_t image)
 
 static void rflush_recover_context(jxr_image_t image)
 {
-    DEBUG("rflush_mb_strip: recover contex\n");
+    DBG("rflush_mb_strip: recover contex\n");
 
     int format_scale = 256;
     if (image->use_clr_fmt == 2 /* YUV422 */) {
@@ -2480,7 +2480,7 @@ void _jxr_rflush_mb_strip(jxr_image_t image, int tx, int ty, int my)
     line. It accounts for the current tile row. */
     const int use_my = my + (ty>=0? image->tile_row_position[ty] : 0) - 1;
 
-    DEBUG("rflush_mb_strip: cur_my=%d, tile-x/y=%d/%d, my=%d, use_my=%d\n", image->cur_my, tx, ty, my, use_my);
+    DBG("rflush_mb_strip: cur_my=%d, tile-x/y=%d/%d, my=%d, use_my=%d\n", image->cur_my, tx, ty, my, use_my);
 
     if (image->tile_columns > 1 && tx >= 0) {
         if (tx+1 < (int) image->tile_columns) {
@@ -2776,7 +2776,7 @@ void _jxr_r_rotate_mb_strip(jxr_image_t image)
 * Reference Software v1.5 updates.
 *
 * Revision 1.51 2008/03/24 18:06:56 steve
-* Imrpove DEBUG messages around quantization.
+* Imrpove DBG messages around quantization.
 *
 * Revision 1.50 2008/03/20 22:38:53 steve
 * Use MB HPQP instead of first HPQP in decode.
@@ -2817,7 +2817,7 @@ void _jxr_r_rotate_mb_strip(jxr_image_t image)
 * Handle compress of YUV444 color DCONLY
 *
 * Revision 1.38 2008/01/08 23:23:18 steve
-* Clean up some DEBUG messages.
+* Clean up some DBG messages.
 *
 * Revision 1.37 2008/01/04 17:07:35 steve
 * API interface for setting QP values.

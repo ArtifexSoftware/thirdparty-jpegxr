@@ -245,20 +245,20 @@ static int quantize_lphp(int value, int quant)
 
 static void dump_all_strips(jxr_image_t image)
 {
-#if defined(DETAILED_DEBUG) && 0
+#if defined(DETAILED_DBG) && 0
     int mx;
     int ch;
 #if 1
     for (mx = 0 ; mx < EXTENDED_WIDTH_BLOCKS(image) ; mx += 1) {
         for (ch = 0 ; ch < image->num_channels ; ch += 1) {
             int jdx;
-            DEBUG("up3: mx=%3d ch=%d:", mx, ch);
+            DBG("up3: mx=%3d ch=%d:", mx, ch);
             for (jdx = 0 ; jdx < 256 ; jdx += 1) {
                 if (jdx%8 == 0 && jdx != 0)
-                    DEBUG("\n%*s", 17, "");
-                DEBUG(" %08x", image->strip[ch].up3[mx].data[jdx]);
+                    DBG("\n%*s", 17, "");
+                DBG(" %08x", image->strip[ch].up3[mx].data[jdx]);
             }
-            DEBUG("\n");
+            DBG("\n");
         }
     }
 #endif
@@ -266,13 +266,13 @@ static void dump_all_strips(jxr_image_t image)
     for (mx = 0 ; mx < EXTENDED_WIDTH_BLOCKS(image) ; mx += 1) {
         for (ch = 0 ; ch < image->num_channels ; ch += 1) {
             int jdx;
-            DEBUG("up2: mx=%3d ch=%d:", mx, ch);
+            DBG("up2: mx=%3d ch=%d:", mx, ch);
             for (jdx = 0 ; jdx < 256 ; jdx += 1) {
                 if (jdx%8 == 0 && jdx != 0)
-                    DEBUG("\n%*s", 17, "");
-                DEBUG(" %08x", image->strip[ch].up2[mx].data[jdx]);
+                    DBG("\n%*s", 17, "");
+                DBG(" %08x", image->strip[ch].up2[mx].data[jdx]);
             }
-            DEBUG("\n");
+            DBG("\n");
         }
     }
 #endif
@@ -280,13 +280,13 @@ static void dump_all_strips(jxr_image_t image)
     for (mx = 0 ; mx < EXTENDED_WIDTH_BLOCKS(image) ; mx += 1) {
         for (ch = 0 ; ch < image->num_channels ; ch += 1) {
             int jdx;
-            DEBUG("up1: mx=%3d ch=%d:", mx, ch);
+            DBG("up1: mx=%3d ch=%d:", mx, ch);
             for (jdx = 0 ; jdx < 256 ; jdx += 1) {
                 if (jdx%8 == 0 && jdx != 0)
-                    DEBUG("\n%*s", 17, "");
-                DEBUG(" %08x", image->strip[ch].up1[mx].data[jdx]);
+                    DBG("\n%*s", 17, "");
+                DBG(" %08x", image->strip[ch].up1[mx].data[jdx]);
             }
-            DEBUG("\n");
+            DBG("\n");
         }
     }
 #endif
@@ -309,7 +309,7 @@ static void wflush_process_strip(jxr_image_t image, int ty)
     const int height = EXTENDED_HEIGHT_BLOCKS(image);
     int cur_row;
 
-    DEBUG("wflush_process_strip: image->cur_my = %d\n", image->cur_my);
+    DBG("wflush_process_strip: image->cur_my = %d\n", image->cur_my);
     dump_all_strips(image);
 
     cur_row = image->tile_row_position[ty] + image->cur_my;
@@ -387,7 +387,7 @@ static void wflush_process_strip(jxr_image_t image, int ty)
     }
 
     if (cur_row >= -1 && cur_row < (height-1)) {
-        DEBUG("wflush_process_string: Calculate HP CBP for my=%d\n", cur_row+1);
+        DBG("wflush_process_string: Calculate HP CBP for my=%d\n", cur_row+1);
 
         /* Perform HP prediction. */
         int use_num_channels = image->num_channels;
@@ -414,7 +414,7 @@ static void wflush_process_strip(jxr_image_t image, int ty)
         }
     }
 
-    DEBUG("wflush_process_strip done: cur_row = %d\n", cur_row);
+    DBG("wflush_process_strip done: cur_row = %d\n", cur_row);
 }
 
 /* since hpcbp is processed at each row, need to save context for each tile column */
@@ -446,7 +446,7 @@ void _jxr_w_store_hpcbp_state(jxr_image_t image, int tx)
 
 void _jxr_wflush_mb_strip(jxr_image_t image, int tx, int ty, int my, int read_new)
 {
-    DEBUG("wflush_mb_strip: cur_my=%d, tile-x/y=%d/%d, my=%d\n", image->cur_my, tx, ty, my);
+    DBG("wflush_mb_strip: cur_my=%d, tile-x/y=%d/%d, my=%d\n", image->cur_my, tx, ty, my);
 
     unsigned ty_offset = 0;
     if (FREQUENCY_MODE_CODESTREAM_FLAG(image))
@@ -512,7 +512,7 @@ void _jxr_wflush_mb_strip(jxr_image_t image, int tx, int ty, int my, int read_ne
 */
 static void wflush_to_tile_buffer(jxr_image_t image, int my)
 {
-    DEBUG("wflush_mb_strip: wflush_to_tile_buffer my=%d\n", my);
+    DBG("wflush_mb_strip: wflush_to_tile_buffer my=%d\n", my);
 
     int format_scale = 256;
     if (image->use_clr_fmt == 2 /* YUV422 */) {
@@ -526,7 +526,7 @@ static void wflush_to_tile_buffer(jxr_image_t image, int my)
     for (tx = 0; tx < (int) image->tile_columns ; tx += 1) {
         int mx;
         for (mx = 0 ; mx < (int) image->tile_column_width[tx] ; mx += 1) {
-            DEBUG("wflush_mb_strip: wflush_to_tile_buffer tx=%d, mx=%d, CUR=0x%08x UP1=0x%08x, UP2=0x%08x, UP3=0x%08x, LP_QUANT=%d\n",
+            DBG("wflush_mb_strip: wflush_to_tile_buffer tx=%d, mx=%d, CUR=0x%08x UP1=0x%08x, UP2=0x%08x, UP3=0x%08x, LP_QUANT=%d\n",
                 tx, mx, MACROBLK_CUR(image,0,tx,mx).data[0],
                 MACROBLK_UP1(image,0,tx,mx).data[0],
                 MACROBLK_UP2(image,0,tx,mx).data[0],
@@ -563,7 +563,7 @@ static void wflush_to_tile_buffer(jxr_image_t image, int my)
 */
 static void wflush_collect_mb_strip_data(jxr_image_t image, int my)
 {
-    DEBUG("wflush_mb_strip: wflush_collect_mb_strip_data my=%d\n", my);
+    DBG("wflush_mb_strip: wflush_collect_mb_strip_data my=%d\n", my);
 
     int format_scale = 256;
     if (image->use_clr_fmt == 2 /* YUV422 */) {
@@ -594,7 +594,7 @@ static void wflush_collect_mb_strip_data(jxr_image_t image, int my)
                 for (idx = 0 ; idx < 7 ; idx += 1)
                      MACROBLK_CUR(image,ch,tx,mx).pred_dclp[idx] = mb->pred_dclp[idx];
             }
-            DEBUG("wflush_mb_strip: wflush_collect_mb_strip_data tx=%d, mx=%d, CUR=0x%08x UP1=0x%08x, UP2=0x%08x, UP3=0x%08x lp_quant=%d\n",
+            DBG("wflush_mb_strip: wflush_collect_mb_strip_data tx=%d, mx=%d, CUR=0x%08x UP1=0x%08x, UP2=0x%08x, UP3=0x%08x lp_quant=%d\n",
                 tx, mx, MACROBLK_CUR(image,0,tx,mx).data[0],
                 MACROBLK_UP1(image,0,tx,mx).data[0],
                 MACROBLK_UP2(image,0,tx,mx).data[0],
@@ -1015,14 +1015,14 @@ static void collect_and_scale_up4(jxr_image_t image, int ty)
     // Adjust the bias by the shift bits.
     bias >>= shift_bits;
     
-    DEBUG("scale_and_emit_top: scale=%d, bias=%d, round=%d, shift_bits=%d\n",
+    DBG("scale_and_emit_top: scale=%d, bias=%d, round=%d, shift_bits=%d\n",
         scale, bias, round, shift_bits);
 
     assert(image->num_channels > 0);
 
     /* This function operates on a whole image (not tile) basis */
     int my = image->cur_my + image->tile_row_position[ty] + 4;
-    DEBUG("collect_and_scale_up4: Collect strip %d\n", my);
+    DBG("collect_and_scale_up4: Collect strip %d\n", my);
 
     int mx;
     int ch;
@@ -1108,15 +1108,15 @@ static void collect_and_scale_up4(jxr_image_t image, int ty)
 	    }
         }
 
-#if defined(DETAILED_DEBUG) && 0
+#if defined(DETAILED_DBG) && 0
         for (ch = 0 ; ch < num_channels ; ch += 1) {
-            DEBUG("image data mx=%3d my=%3d ch=%d:", mx, my, ch);
+            DBG("image data mx=%3d my=%3d ch=%d:", mx, my, ch);
             for (jdx = 0 ; jdx < 256 ; jdx += 1) {
                 if (jdx%16 == 0 && jdx != 0)
-                    DEBUG("\n%*s", 30, "");
-                DEBUG(" %02x", image->strip[ch].up4[mx].data[jdx]);
+                    DBG("\n%*s", 30, "");
+                DBG(" %02x", image->strip[ch].up4[mx].data[jdx]);
             }
-            DEBUG("\n");
+            DBG("\n");
         }
 #endif
 
@@ -1217,7 +1217,7 @@ static void scale_and_shuffle_up3(jxr_image_t image)
     }
     for (mx = 0 ; mx < (int) EXTENDED_WIDTH_BLOCKS(image) ; mx += 1) {
 
-#if defined(DETAILED_DEBUG) && 1
+#if defined(DETAILED_DBG) && 1
         int jdx;
         for (ch = 0 ; ch < image->num_channels ; ch += 1) {
             int count = 256;
@@ -1226,13 +1226,13 @@ static void scale_and_shuffle_up3(jxr_image_t image)
             if (ch > 0 && image->use_clr_fmt==1/*YUV420*/)
                 count = 64;
 
-            DEBUG("image yuv mx=%3d my=%3d ch=%d:", mx, my, ch);
+            DBG("image yuv mx=%3d my=%3d ch=%d:", mx, my, ch);
             for (jdx = 0 ; jdx < count ; jdx += 1) {
                 if (jdx%8 == 0 && jdx != 0)
-                    DEBUG("\n%*s", 29, "");
-                DEBUG(" %08x", image->strip[ch].up3[mx].data[jdx]);
+                    DBG("\n%*s", 29, "");
+                DBG(" %08x", image->strip[ch].up3[mx].data[jdx]);
             }
-            DEBUG("\n");
+            DBG("\n");
         }
 #endif
 
@@ -1288,7 +1288,7 @@ static void first_prefilter444_up2(jxr_image_t image, int ch, int ty)
         top_my -= image->tile_row_height[ty++];
     top_my += image->tile_row_position[ty];
 
-    DEBUG("Pre Level2 for row %d\n", top_my);
+    DBG("Pre Level2 for row %d\n", top_my);
 
     for(tx = 0; tx < image->tile_columns; tx++)
     {
@@ -1498,7 +1498,7 @@ static void first_prefilter422_up2(jxr_image_t image, int ch, int ty)
         top_my -= image->tile_row_height[ty++];
     top_my += image->tile_row_position[ty];
 
-    DEBUG("Pre Level2 for row %d\n", top_my);
+    DBG("Pre Level2 for row %d\n", top_my);
 
     for(tx = 0; tx < image->tile_columns; tx++)
     {
@@ -1693,7 +1693,7 @@ static void first_prefilter420_up2(jxr_image_t image, int ch, int ty)
         top_my -= image->tile_row_height[ty++];
     top_my += image->tile_row_position[ty];
 
-    DEBUG("Pre Level2 (YUV420) for row %d\n", top_my);
+    DBG("Pre Level2 (YUV420) for row %d\n", top_my);
 
     for(tx = 0; tx < image->tile_columns; tx++)
     {
@@ -1916,17 +1916,17 @@ static void PCT_stage2_up1(jxr_image_t image, int ch, int ty)
 
         } else if (ch > 0 && image->use_clr_fmt == 2/*YUV422*/) {
 
-#if defined(DETAILED_DEBUG) && 1
-            DEBUG(" DC/LP scaled_flag=%d\n", image->scaled_flag);
+#if defined(DETAILED_DBG) && 1
+            DBG(" DC/LP scaled_flag=%d\n", image->scaled_flag);
             { int jdx;
-            DEBUG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) Pre-PCT:", use_my, mx, ch);
-            DEBUG(" 0x%08x", MACROBLK_UP_DC(image,ch,tx,mx));
+            DBG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) Pre-PCT:", use_my, mx, ch);
+            DBG(" 0x%08x", MACROBLK_UP_DC(image,ch,tx,mx));
             for (jdx = 0; jdx < 7 ; jdx += 1) {
-                DEBUG(" 0x%08x", MACROBLK_UP_LP(image,ch,tx,mx,jdx));
+                DBG(" 0x%08x", MACROBLK_UP_LP(image,ch,tx,mx,jdx));
                 if ((jdx+1)%4 == 3 && jdx != 6)
-                    DEBUG("\n%*s:", 43, "");
+                    DBG("\n%*s:", 43, "");
             }
-            DEBUG("\n");
+            DBG("\n");
             }
 #endif
             /* Scale up the chroma channel */
@@ -1938,16 +1938,16 @@ static void PCT_stage2_up1(jxr_image_t image, int ch, int ty)
                     image->strip[ch].up1[mx].data[jdx] = val;
                 }
             }
-#if defined(DETAILED_DEBUG) && 1
+#if defined(DETAILED_DBG) && 1
             { int jdx;
-            DEBUG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) scaled :", use_my, mx, ch);
-            DEBUG(" 0x%08x", MACROBLK_UP_DC(image,ch,tx,mx));
+            DBG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) scaled :", use_my, mx, ch);
+            DBG(" 0x%08x", MACROBLK_UP_DC(image,ch,tx,mx));
             for (jdx = 0; jdx < 7 ; jdx += 1) {
-                DEBUG(" 0x%08x", MACROBLK_UP_LP(image,ch,tx,mx,jdx));
+                DBG(" 0x%08x", MACROBLK_UP_LP(image,ch,tx,mx,jdx));
                 if ((jdx+1)%4 == 3 && jdx != 6)
-                    DEBUG("\n%*s:", 43, "");
+                    DBG("\n%*s:", 43, "");
             }
-            DEBUG("\n");
+            DBG("\n");
             }
 #endif
 
@@ -1963,31 +1963,31 @@ static void PCT_stage2_up1(jxr_image_t image, int ch, int ty)
             _jxr_2ptFwdT(image->strip[ch].up1[mx].data+0,
                 image->strip[ch].up1[mx].data+4);
 
-#if defined(DETAILED_DEBUG) && 1
-            DEBUG(" DC/LP scaled_flag=%d\n", image->scaled_flag);
+#if defined(DETAILED_DBG) && 1
+            DBG(" DC/LP scaled_flag=%d\n", image->scaled_flag);
             { int jdx;
-            DEBUG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) Post-PCT:", use_my, mx, ch);
-            DEBUG(" 0x%08x", MACROBLK_UP_DC(image,ch,tx,mx));
+            DBG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) Post-PCT:", use_my, mx, ch);
+            DBG(" 0x%08x", MACROBLK_UP_DC(image,ch,tx,mx));
             for (jdx = 0; jdx < 7 ; jdx += 1) {
-                DEBUG(" 0x%08x", MACROBLK_UP_LP(image,ch,tx,mx,jdx));
+                DBG(" 0x%08x", MACROBLK_UP_LP(image,ch,tx,mx,jdx));
                 if ((jdx+1)%4 == 3 && jdx != 6)
-                    DEBUG("\n%*s:", 44, "");
+                    DBG("\n%*s:", 44, "");
             }
-            DEBUG("\n");
+            DBG("\n");
             }
 #endif
 
         } else {
-#if defined(DETAILED_DEBUG) && 1
+#if defined(DETAILED_DBG) && 1
             { int jdx;
-            DEBUG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) Pre-PCT:", use_my, mx, ch);
-            DEBUG(" 0x%08x", MACROBLK_UP_DC(image,ch,tx,mx));
+            DBG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) Pre-PCT:", use_my, mx, ch);
+            DBG(" 0x%08x", MACROBLK_UP_DC(image,ch,tx,mx));
             for (jdx = 0; jdx < 15 ; jdx += 1) {
-                DEBUG(" 0x%08x", MACROBLK_UP_LP(image,ch,tx,mx,jdx));
+                DBG(" 0x%08x", MACROBLK_UP_LP(image,ch,tx,mx,jdx));
                 if ((jdx+1)%4 == 3 && jdx != 14)
-                    DEBUG("\n%*s:", 43, "");
+                    DBG("\n%*s:", 43, "");
             }
-            DEBUG("\n");
+            DBG("\n");
             }
 #endif
             /* Scale up the chroma channel */
@@ -2002,16 +2002,16 @@ static void PCT_stage2_up1(jxr_image_t image, int ch, int ty)
 
             _jxr_4x4PCT(image->strip[ch].up1[mx].data);
 
-#if defined(DETAILED_DEBUG)
+#if defined(DETAILED_DBG)
             { int jdx;
-            DEBUG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) post-PCT:", use_my, mx, ch);
-            DEBUG(" 0x%08x", MACROBLK_UP_DC(image,ch,0,mx));
+            DBG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) post-PCT:", use_my, mx, ch);
+            DBG(" 0x%08x", MACROBLK_UP_DC(image,ch,0,mx));
             for (jdx = 0; jdx < 15 ; jdx += 1) {
-                DEBUG(" 0x%08x", MACROBLK_UP_LP(image,ch,tx,mx,jdx));
+                DBG(" 0x%08x", MACROBLK_UP_LP(image,ch,tx,mx,jdx));
                 if ((jdx+1)%4 == 3 && jdx != 14)
-                    DEBUG("\n%*s:", 44, "");
+                    DBG("\n%*s:", 44, "");
             }
-            DEBUG("\n");
+            DBG("\n");
             }
 #endif
         }
@@ -2022,7 +2022,7 @@ static void PCT_stage2_up1(jxr_image_t image, int ch, int ty)
         lp_quant = _jxr_quant_map(image, lp_quant, ch==0? 1 : 0/* iShift for YONLY */);
         assert(lp_quant > 0);
 
-        DEBUG(" DC-LP (mx=%d ch=%d) use_dc_quant=%d, use_lp_quant=%d\n",
+        DBG(" DC-LP (mx=%d ch=%d) use_dc_quant=%d, use_lp_quant=%d\n",
             mx, ch, dc_quant, lp_quant);
 
         CHECK1(image->lwf_test, MACROBLK_CUR_DC(image,ch,tx,mx));
@@ -2033,16 +2033,16 @@ static void PCT_stage2_up1(jxr_image_t image, int ch, int ty)
             int value = MACROBLK_UP_LP(image,ch,tx,mx,jdx-1);
             MACROBLK_UP_LP(image,ch,tx,mx,jdx-1) = quantize_lphp(value, lp_quant);
         }
-#if defined(DETAILED_DEBUG)
+#if defined(DETAILED_DBG)
         { int jdx;
-        DEBUG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) post-QP:", use_my, mx, ch);
-        DEBUG(" 0x%08x", MACROBLK_UP_DC(image,ch,tx,mx));
+        DBG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) post-QP:", use_my, mx, ch);
+        DBG(" 0x%08x", MACROBLK_UP_DC(image,ch,tx,mx));
         for (jdx = 0; jdx < dclp_count-1 ; jdx += 1) {
-            DEBUG(" 0x%08x", MACROBLK_UP_LP(image,ch,tx,mx,jdx));
+            DBG(" 0x%08x", MACROBLK_UP_LP(image,ch,tx,mx,jdx));
             if ((jdx+1)%4 == 3 && jdx != 14)
-                DEBUG("\n%*s:", 43, "");
+                DBG("\n%*s:", 43, "");
         }
-        DEBUG("\n");
+        DBG("\n");
         }
 #endif
     }
@@ -2059,7 +2059,7 @@ static void second_prefilter444_up1(jxr_image_t image, int ch, int ty)
         top_my -= image->tile_row_height[ty++];
     top_my += image->tile_row_position[ty];
 
-    DEBUG("Pre Level1 (YUV444) for row %d\n", top_my);
+    DBG("Pre Level1 (YUV444) for row %d\n", top_my);
 
     for(tx = 0; tx < image->tile_columns; tx++)
     {
@@ -2181,7 +2181,7 @@ static void second_prefilter422_up1(jxr_image_t image, int ch, int ty)
         top_my -= image->tile_row_height[ty++];
     top_my += image->tile_row_position[ty];
 
-    DEBUG("Pre Level2 (YUV422) for row %d\n", top_my);
+    DBG("Pre Level2 (YUV422) for row %d\n", top_my);
 
     /* Top edge */
     if(top_my == 0 || (image->disableTileOverlapFlag && TOP_Y(top_my)))
@@ -2391,7 +2391,7 @@ static void second_prefilter420_up1(jxr_image_t image, int ch, int ty)
         top_my -= image->tile_row_height[ty++];
     top_my += image->tile_row_position[ty];
 
-    DEBUG("Pre Level2 (YUV420) for row %d\n", top_my);
+    DBG("Pre Level2 (YUV420) for row %d\n", top_my);
 
     if(top_my == 0 || (image->disableTileOverlapFlag && TOP_Y(top_my)))
     {
@@ -2621,32 +2621,32 @@ static void PCT_stage1_up2(jxr_image_t image, int ch, int ty)
     for (mx = 0 ; mx < (int) EXTENDED_WIDTH_BLOCKS(image) ; mx += 1) {
         int jdx;
         for (jdx = 0 ; jdx < 16*dclp_count ; jdx += 16) {
-#if defined(DETAILED_DEBUG)
+#if defined(DETAILED_DBG)
             {
                 int pix;
-                DEBUG(" DC-LP-HP (strip=%3d, mbx=%4d ch=%d, block=%2d) pre-PCT:",
+                DBG(" DC-LP-HP (strip=%3d, mbx=%4d ch=%d, block=%2d) pre-PCT:",
                     use_my, mx, ch, jdx/16);
                 for (pix = 0; pix < 16 ; pix += 1) {
-                    DEBUG(" 0x%08x", image->strip[ch].up2[mx].data[jdx+pix]);
+                    DBG(" 0x%08x", image->strip[ch].up2[mx].data[jdx+pix]);
                     if (pix%4 == 3 && pix != 15)
-                        DEBUG("\n%*s:", 55, "");
+                        DBG("\n%*s:", 55, "");
                 }
-                DEBUG("\n");
+                DBG("\n");
             }
 #endif
             _jxr_4x4PCT(image->strip[ch].up2[mx].data+jdx);
 
-#if defined(DETAILED_DEBUG)
+#if defined(DETAILED_DBG)
             {
                 int pix;
-                DEBUG(" DC-LP-HP (strip=%3d, mbx=%4d ch=%d, block=%2d) PCT:",
+                DBG(" DC-LP-HP (strip=%3d, mbx=%4d ch=%d, block=%2d) PCT:",
                     use_my, mx, ch, jdx/16);
                 for (pix = 0; pix < 16 ; pix += 1) {
-                    DEBUG(" 0x%08x", image->strip[ch].up2[mx].data[jdx+pix]);
+                    DBG(" 0x%08x", image->strip[ch].up2[mx].data[jdx+pix]);
                     if (pix%4 == 3 && pix != 15)
-                        DEBUG("\n%*s:", 51, "");
+                        DBG("\n%*s:", 51, "");
                 }
-                DEBUG("\n");
+                DBG("\n");
             }
 #endif
         }
@@ -2657,7 +2657,7 @@ static void PCT_stage1_up2(jxr_image_t image, int ch, int ty)
         int hp_quant = _jxr_quant_map(image, hp_quant_raw, 1);
         assert(hp_quant > 0);
 
-        DEBUG(" DC-LP-HP (mx=%d ch=%d) use_hp_quant=%d (hp quant index=%u raw=%d)\n", mx, ch,
+        DBG(" DC-LP-HP (mx=%d ch=%d) use_hp_quant=%d (hp quant index=%u raw=%d)\n", mx, ch,
             hp_quant, _jxr_select_hp_index(image, tx, ty, mx, use_my), hp_quant_raw);
 
         for (jdx = 0 ; jdx < dclp_count ; jdx += 1) {
@@ -2667,17 +2667,17 @@ static void PCT_stage1_up2(jxr_image_t image, int ch, int ty)
                 int value = MACROBLK_UP2_HP(image,ch,tx,mx,jdx,k);
                 MACROBLK_UP2_HP(image,ch,tx,mx,jdx,k) = quantize_lphp(value, hp_quant);
             }
-#if defined(DETAILED_DEBUG)
+#if defined(DETAILED_DBG)
             {
                 int pix;
-                DEBUG(" DC-LP-HP (strip=%3d, mbx=%4d ch=%d, block=%2d) Quantized: 0x%08x",
+                DBG(" DC-LP-HP (strip=%3d, mbx=%4d ch=%d, block=%2d) Quantized: 0x%08x",
                     use_my, mx, ch, jdx, MACROBLK_UP2_LP(image,ch,tx,mx,jdx));
                 for (pix = 1; pix < 16 ; pix += 1) {
-                    DEBUG(" 0x%08x", MACROBLK_UP2_HP(image,ch,tx,mx,jdx,pix-1));
+                    DBG(" 0x%08x", MACROBLK_UP2_HP(image,ch,tx,mx,jdx,pix-1));
                     if (pix%4 == 3 && pix != 15)
-                        DEBUG("\n%*s:", 57, "");
+                        DBG("\n%*s:", 57, "");
                 }
-                DEBUG("\n");
+                DBG("\n");
             }
 #endif
         }
@@ -2776,7 +2776,7 @@ static void w_predict_up1_dclp(jxr_image_t image, int tx, int ty, int mx)
         long left = mx>0? MACROBLK_UP1(image,ch,tx,mx-1).pred_dclp[0] : 0;
         long top = MACROBLK_CUR(image,ch,tx,mx).pred_dclp[0];
 
-        DEBUG(" MBDC_MODE=%d for TX=%d, MBx=%d, MBy=%d, ch=%d, left=0x%lx, top=0x%lx, cur=0x%x\n",
+        DBG(" MBDC_MODE=%d for TX=%d, MBx=%d, MBy=%d, ch=%d, left=0x%lx, top=0x%lx, cur=0x%x\n",
             mbdc_mode, tx, mx, my, ch, left, top, MACROBLK_UP_DC(image,ch,tx,mx));
 
         /* Save this unpredicted DC value for later prediction steps. */
@@ -2826,7 +2826,7 @@ static void w_predict_up1_dclp(jxr_image_t image, int tx, int ty, int mx)
         else
             mblp_mode = 2;
 
-        DEBUG(" MBLP_MODE=%d for MBx=%d, MBy=%d (lp_quant=%d,lp_quant_ctx=%d)\n", mblp_mode, mx, my,
+        DBG(" MBLP_MODE=%d for MBx=%d, MBy=%d (lp_quant=%d,lp_quant_ctx=%d)\n", mblp_mode, mx, my,
             mblp_index, mblp_index_left);
 
     } else if (mbdc_mode == 1) {
@@ -2836,12 +2836,12 @@ static void w_predict_up1_dclp(jxr_image_t image, int tx, int ty, int mx)
         else
             mblp_mode = 2;
 
-        DEBUG(" MBLP_MODE=%d for MBx=%d, MBy=%d (lp_quant=%d,lp_quant_ctx=%d)\n", mblp_mode, mx, my,
+        DBG(" MBLP_MODE=%d for MBx=%d, MBy=%d (lp_quant=%d,lp_quant_ctx=%d)\n", mblp_mode, mx, my,
             mblp_index, mblp_index_up);
     } else {
 
         mblp_mode = 2;
-        DEBUG(" MBLP_MODE=%d for MBx=%d, MBy=%d (lp_quant=%d,lp_quant_ctx=-1)\n", mblp_mode, mx, my,
+        DBG(" MBLP_MODE=%d for MBx=%d, MBy=%d (lp_quant=%d,lp_quant_ctx=-1)\n", mblp_mode, mx, my,
             mblp_index);
     }
 
@@ -3000,21 +3000,21 @@ static void w_predict_up1_hp(jxr_image_t image, int ch, int tx, int mx, int mbhp
                     CHECK3(image->lwf_test, MACROBLK_CUR_HP(image,2,tx,mx,idx, 0), MACROBLK_CUR_HP(image,2,tx,mx,idx, 1), MACROBLK_CUR_HP(image,2,tx,mx,idx, 2));
                 }
             }
-#if defined(DETAILED_DEBUG) && 0
+#if defined(DETAILED_DBG) && 0
             { 
                 int idx;
                 for (idx = 0 ; idx < 8 ; idx += 1) {
                     int k;
-                    DEBUG(" HP val difference[ch=1, tx=%u, mx=%d, block=%d] ==", tx, mx, idx);
+                    DBG(" HP val difference[ch=1, tx=%u, mx=%d, block=%d] ==", tx, mx, idx);
                     for (k = 1 ; k<16; k+=1) {
-                        DEBUG(" 0x%x", MACROBLK_UP1_HP(image,1,tx,mx,idx,k-1));
+                        DBG(" 0x%x", MACROBLK_UP1_HP(image,1,tx,mx,idx,k-1));
                     }
-                    DEBUG("\n");
-                    DEBUG(" HP val difference[ch=2, tx=%u, mx=%d, block=%d] ==", tx, mx, idx);
+                    DBG("\n");
+                    DBG(" HP val difference[ch=2, tx=%u, mx=%d, block=%d] ==", tx, mx, idx);
                     for (k = 1 ; k<16; k+=1) {
-                        DEBUG(" 0x%x", MACROBLK_UP1_HP(image,2,tx,mx,idx,k-1));
+                        DBG(" 0x%x", MACROBLK_UP1_HP(image,2,tx,mx,idx,k-1));
                     }
-                    DEBUG("\n");
+                    DBG("\n");
                 }
             }
 #endif
@@ -3033,17 +3033,17 @@ static void w_predict_lp444(jxr_image_t image, int tx, int mx, int my, int ch, i
     MACROBLK_UP1(image,ch,tx,mx).pred_dclp[5] = MACROBLK_UP_LP(image,ch,tx,mx,7);
     MACROBLK_UP1(image,ch,tx,mx).pred_dclp[6] = MACROBLK_UP_LP(image,ch,tx,mx,11);
 
-#if defined(DETAILED_DEBUG)
+#if defined(DETAILED_DBG)
     {
         int jdx;
-        DEBUG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) Predicted:", my, mx, ch);
-        DEBUG(" 0x%08x", MACROBLK_UP1(image,ch,tx,mx).pred_dclp[0]);
+        DBG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) Predicted:", my, mx, ch);
+        DBG(" 0x%08x", MACROBLK_UP1(image,ch,tx,mx).pred_dclp[0]);
         for (jdx = 0; jdx < 15 ; jdx += 1) {
-            DEBUG(" 0x%08x", MACROBLK_UP_LP(image,ch,tx,mx,jdx));
+            DBG(" 0x%08x", MACROBLK_UP_LP(image,ch,tx,mx,jdx));
             if ((jdx+1)%4 == 3 && jdx != 14)
-                DEBUG("\n%*s:", 45, "");
+                DBG("\n%*s:", 45, "");
         }
-        DEBUG("\n");
+        DBG("\n");
     }
 #endif
 
@@ -3063,17 +3063,17 @@ static void w_predict_lp444(jxr_image_t image, int tx, int mx, int my, int ch, i
         case 2:
             break;
             }
-#if defined(DETAILED_DEBUG)
+#if defined(DETAILED_DBG)
         {
             int jdx;
-            DEBUG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) Difference:", my, mx, ch);
-            DEBUG(" 0x%08x", MACROBLK_UP_DC(image,ch,tx,mx));
+            DBG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) Difference:", my, mx, ch);
+            DBG(" 0x%08x", MACROBLK_UP_DC(image,ch,tx,mx));
             for (jdx = 0; jdx < 15 ; jdx += 1) {
-                DEBUG(" 0x%08x", MACROBLK_UP_LP(image,ch,tx,mx,jdx));
+                DBG(" 0x%08x", MACROBLK_UP_LP(image,ch,tx,mx,jdx));
                 if ((jdx+1)%4 == 3 && jdx != 14)
-                    DEBUG("\n%*s:", 46, "");
+                    DBG("\n%*s:", 46, "");
             }
-            DEBUG("\n");
+            DBG("\n");
         }
 #endif
 }
@@ -3086,17 +3086,17 @@ static void w_predict_lp422(jxr_image_t image, int tx, int mx, int my, int ch, i
     MACROBLK_UP1(image,ch,tx,mx).pred_dclp[5] = MACROBLK_UP_LP(image,ch,tx,mx,4);
     MACROBLK_UP1(image,ch,tx,mx).pred_dclp[6] = MACROBLK_UP_LP(image,ch,tx,mx,5);
 
-#if defined(DETAILED_DEBUG)
+#if defined(DETAILED_DBG)
     {
         int jdx;
-        DEBUG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) Predicted:", my, mx, ch);
-        DEBUG(" 0x%08x", MACROBLK_UP1(image,ch,tx,mx).pred_dclp[0]);
+        DBG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) Predicted:", my, mx, ch);
+        DBG(" 0x%08x", MACROBLK_UP1(image,ch,tx,mx).pred_dclp[0]);
         for (jdx = 0; jdx < 7 ; jdx += 1) {
-            DEBUG(" 0x%08x", MACROBLK_UP_LP(image,ch,tx,mx,jdx));
+            DBG(" 0x%08x", MACROBLK_UP_LP(image,ch,tx,mx,jdx));
             if ((jdx+1)%4 == 3 && jdx != 6)
-                DEBUG("\n%*s:", 45, "");
+                DBG("\n%*s:", 45, "");
         }
-        DEBUG("\n");
+        DBG("\n");
     }
 #endif
     switch (mblp_mode) {
@@ -3119,17 +3119,17 @@ static void w_predict_lp422(jxr_image_t image, int tx, int mx, int my, int ch, i
             }
             break;
             }
-#if defined(DETAILED_DEBUG)
+#if defined(DETAILED_DBG)
         {
             int jdx;
-            DEBUG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) Difference:", my, mx, ch);
-            DEBUG(" 0x%08x", MACROBLK_UP_DC(image,ch,tx,mx));
+            DBG(" DC/LP (strip=%3d, mbx=%4d, ch=%d) Difference:", my, mx, ch);
+            DBG(" 0x%08x", MACROBLK_UP_DC(image,ch,tx,mx));
             for (jdx = 0; jdx < 7 ; jdx += 1) {
-                DEBUG(" 0x%08x", MACROBLK_UP_LP(image,ch,tx,mx,jdx));
+                DBG(" 0x%08x", MACROBLK_UP_LP(image,ch,tx,mx,jdx));
                 if ((jdx+1)%4 == 3 && jdx != 6)
-                    DEBUG("\n%*s:", 46, "");
+                    DBG("\n%*s:", 46, "");
             }
-            DEBUG("\n");
+            DBG("\n");
         }
 #endif
 }
@@ -3209,14 +3209,14 @@ static void calculate_hpcbp_up1(jxr_image_t image, int tx, int ty, int mx)
     MACROBLK_UP1(image,0,tx,mx).hp_model_bits[0] = image->model_hp.bits[0];
     MACROBLK_UP1(image,0,tx,mx).hp_model_bits[1] = image->model_hp.bits[1];
 
-    DEBUG(" MP_HP: lap_mean={%u, %u}, model_hp.bits={%u %u}, model_hp.state={%d %d}\n",
+    DBG(" MP_HP: lap_mean={%u, %u}, model_hp.bits={%u %u}, model_hp.state={%d %d}\n",
         lap_mean[0], lap_mean[1],
         image->model_hp.bits[0], image->model_hp.bits[1],
         image->model_hp.state[0], image->model_hp.state[1]);
 
     _jxr_UpdateModelMB(image, lap_mean, &image->model_hp, 2/*band=HP*/);
 
-    DEBUG(" MP_HP: Updated: lap_mean={%u, %u}, model_hp.bits={%u %u}, model_hp.state={%d %d}\n",
+    DBG(" MP_HP: Updated: lap_mean={%u, %u}, model_hp.bits={%u %u}, model_hp.state={%d %d}\n",
         lap_mean[0], lap_mean[1],
         image->model_hp.bits[0], image->model_hp.bits[1],
         image->model_hp.state[0], image->model_hp.state[1]);
@@ -3249,7 +3249,7 @@ static void w_PredCBP(jxr_image_t image, unsigned tx, unsigned ty, unsigned mx)
             break;
         default:
             for (ch = 0 ; ch < image->num_channels ; ch += 1) {
-                DEBUG(" PredCBP: Predicted HPCBP[ch=%d]: 0x%04x\n",
+                DBG(" PredCBP: Predicted HPCBP[ch=%d]: 0x%04x\n",
                     ch, MACROBLK_UP1_HPCBP(image,ch,tx,mx));
                 _jxr_w_PredCBP444(image, ch, tx, mx, use_my);
             }
@@ -3308,7 +3308,7 @@ static void w_PredCBP(jxr_image_t image, unsigned tx, unsigned ty, unsigned mx)
 * Reference Software v1.5 updates.
 *
 * Revision 1.47 2008/03/24 18:06:56 steve
-* Imrpove DEBUG messages around quantization.
+* Imrpove DBG messages around quantization.
 *
 * Revision 1.46 2008/03/21 18:05:53 steve
 * Proper CMYK formatting on input.
