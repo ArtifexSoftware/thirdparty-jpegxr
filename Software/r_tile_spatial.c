@@ -87,7 +87,7 @@ int _jxr_r_TILE_SPATIAL(jxr_image_t image, struct rbitstream*str,
                         unsigned tx, unsigned ty)
 {
     int rc = 0;
-    DEBUG("START TILE_SPATIAL at tile=[%u %u] bitpos=%zu\n", tx, ty, _jxr_rbitstream_bitpos(str));
+    DBG("START TILE_SPATIAL at tile=[%u %u] bitpos=%zu\n", tx, ty, _jxr_rbitstream_bitpos(str));
 
     /* TILE_STARTCODE == 1 */
     unsigned char s0, s1, s2, s3;
@@ -95,9 +95,9 @@ int _jxr_r_TILE_SPATIAL(jxr_image_t image, struct rbitstream*str,
     s1 = _jxr_rbitstream_uint8(str); /* 0x00 */
     s2 = _jxr_rbitstream_uint8(str); /* 0x01 */
     s3 = _jxr_rbitstream_uint8(str); /* reserved */
-    DEBUG(" TILE_STARTCODE == %02x %02x %02x (reserved: %02x)\n", s0, s1, s2, s3);
+    DBG(" TILE_STARTCODE == %02x %02x %02x (reserved: %02x)\n", s0, s1, s2, s3);
     if (s0 != 0x00 || s1 != 0x00 || s2 != 0x01) {
-      DEBUG(" TILE_LOWPASS ERROR: Invalid marker.\n");
+      DBG(" TILE_LOWPASS ERROR: Invalid marker.\n");
       return JXR_EC_ERROR;
       /* FIX THOR: Invalid TILE_STARTCODE detected */
     }
@@ -105,7 +105,7 @@ int _jxr_r_TILE_SPATIAL(jxr_image_t image, struct rbitstream*str,
     image->trim_flexbits = 0;
     if (TRIM_FLEXBITS_FLAG(image)) {
         image->trim_flexbits =_jxr_rbitstream_uint4(str);
-        DEBUG(" TRIM_FLEXBITS = %u\n", image->trim_flexbits);
+        DBG(" TRIM_FLEXBITS = %u\n", image->trim_flexbits);
     }
 
     /* Read the tile header (which includes sub-headers for
@@ -167,13 +167,13 @@ int _jxr_r_TILE_SPATIAL(jxr_image_t image, struct rbitstream*str,
             if (plane->bands_present!=3) {
                 if (plane->num_lp_qps>1 && !plane->lp_use_dc_qp) {
                     qp_index_lp = _jxr_DECODE_QP_INDEX(str, plane->num_lp_qps);
-                    DEBUG(" DECODE_QP_INDEX(%d) --> %u (LP)\n", plane->num_lp_qps, qp_index_lp);
+                    DBG(" DECODE_QP_INDEX(%d) --> %u (LP)\n", plane->num_lp_qps, qp_index_lp);
                 }
                 qp_index_hp = 0;
                 if (plane->bands_present!=2 && plane->num_hp_qps>1) {
                     if (!plane->hp_use_lp_qp) {
                         qp_index_hp = _jxr_DECODE_QP_INDEX(str, plane->num_hp_qps);
-                        DEBUG(" DECODE_QP_INDEX(%d) --> %u (HP)\n", plane->num_hp_qps, qp_index_hp);
+                        DBG(" DECODE_QP_INDEX(%d) --> %u (HP)\n", plane->num_hp_qps, qp_index_hp);
                     }
                     else {
                         qp_index_hp = qp_index_lp;
@@ -183,10 +183,10 @@ int _jxr_r_TILE_SPATIAL(jxr_image_t image, struct rbitstream*str,
             for (ch = 0 ; ch < plane->num_channels ; ch += 1) {
                 /* Save the LP Quant *INDEX* here. Prediction needs it. */
                 MACROBLK_CUR_LP_QUANT(plane,ch,tx,mx) = qp_index_lp;
-                DEBUG(" LP_QUANT INDEX for tx=%u ty=%u ch=%u MBx=%d is %d\n", tx, ty, ch, mx,
+                DBG(" LP_QUANT INDEX for tx=%u ty=%u ch=%u MBx=%d is %d\n", tx, ty, ch, mx,
                     MACROBLK_CUR_LP_QUANT(plane,ch,tx,mx));
                 MACROBLK_CUR_HP_QUANT(plane,ch,tx,mx) = plane->hp_quant_ch[ch][qp_index_hp];
-                DEBUG(" HP_QUANT VALUE for tx=%u ty=%u ch=%u MBx=%d is %d\n", tx, ty, ch, mx,
+                DBG(" HP_QUANT VALUE for tx=%u ty=%u ch=%u MBx=%d is %d\n", tx, ty, ch, mx,
                     MACROBLK_CUR_HP_QUANT(plane,ch,tx,mx));
             }
 
@@ -197,12 +197,12 @@ int _jxr_r_TILE_SPATIAL(jxr_image_t image, struct rbitstream*str,
                 if (plane->bands_present != 2 /* NOHIGHPASS */) {
                     rc = _jxr_r_MB_CBP(plane, str, plane_idx, tx, ty, mx, my);
                     if (rc < 0) {
-                        DEBUG("r_MB_CBP returned ERROR rc=%d\n", rc);
+                        DBG("r_MB_CBP returned ERROR rc=%d\n", rc);
                         return rc;
                     }
                     rc = _jxr_r_MB_HP(plane, str, plane_idx, tx, ty, mx, my);
                     if (rc < 0) {
-                        DEBUG("r_MB_HP returned ERROR rc=%d\n", rc);
+                        DBG("r_MB_HP returned ERROR rc=%d\n", rc);
                         return rc;
                     }
                 }
@@ -215,7 +215,7 @@ int _jxr_r_TILE_SPATIAL(jxr_image_t image, struct rbitstream*str,
 
     /* Flush the remaining strips to output. */
     if (tx+1 == image->tile_columns && ty+1 == image->tile_rows) {
-        DEBUG(" Cleanup flush after last tile (tx=%d, ty=%d)\n", tx, ty);
+        DBG(" Cleanup flush after last tile (tx=%d, ty=%d)\n", tx, ty);
         if (ALPHACHANNEL_FLAG(image))
             _jxr_rflush_mb_strip(image->alpha, tx, ty, mb_height);
         _jxr_rflush_mb_strip(image, tx, ty, mb_height);
@@ -233,7 +233,7 @@ int _jxr_r_TILE_SPATIAL(jxr_image_t image, struct rbitstream*str,
         _jxr_rflush_mb_strip(image, tx, ty, mb_height+3);
     }
     _jxr_rbitstream_syncbyte(str);
-    DEBUG("END TILE_SPATIAL\n");
+    DBG("END TILE_SPATIAL\n");
     return 0;
 }
 
@@ -248,7 +248,7 @@ int _jxr_r_TILE_SPATIAL_stripe(jxr_image_t image, struct rbitstream*str,
   if (image->spatial_buffered_flag == 0) {
     /* Header is not yet parsed off. Do now.
      */
-    DEBUG("START TILE_SPATIAL at tile=[%u %u] bitpos=%zu\n", tx, ty, _jxr_rbitstream_bitpos(str));
+    DBG("START TILE_SPATIAL at tile=[%u %u] bitpos=%zu\n", tx, ty, _jxr_rbitstream_bitpos(str));
     
     if(INDEXTABLE_PRESENT_FLAG(image)) {
       _jxr_rbitstream_seek(str, image->tile_index_table[image->tile_columns * ty + tx]);
@@ -259,9 +259,9 @@ int _jxr_r_TILE_SPATIAL_stripe(jxr_image_t image, struct rbitstream*str,
     s1 = _jxr_rbitstream_uint8(str); /* 0x00 */
     s2 = _jxr_rbitstream_uint8(str); /* 0x01 */
     s3 = _jxr_rbitstream_uint8(str); /* reserved */
-    DEBUG(" TILE_STARTCODE == %02x %02x %02x (reserved: %02x)\n", s0, s1, s2, s3);
+    DBG(" TILE_STARTCODE == %02x %02x %02x (reserved: %02x)\n", s0, s1, s2, s3);
     if (s0 != 0x00 || s1 != 0x00 || s2 != 0x01) {
-      DEBUG(" TILE_LOWPASS ERROR: Invalid marker.\n");
+      DBG(" TILE_LOWPASS ERROR: Invalid marker.\n");
       return JXR_EC_ERROR;
       /* FIX THOR: Invalid TILE_STARTCODE detected */
     }
@@ -269,7 +269,7 @@ int _jxr_r_TILE_SPATIAL_stripe(jxr_image_t image, struct rbitstream*str,
     image->trim_flexbits = 0;
     if (TRIM_FLEXBITS_FLAG(image)) {
       image->trim_flexbits =_jxr_rbitstream_uint4(str);
-      DEBUG(" TRIM_FLEXBITS = %u\n", image->trim_flexbits);
+      DBG(" TRIM_FLEXBITS = %u\n", image->trim_flexbits);
     }
     
     /* Read the tile header (which includes sub-headers for
@@ -350,13 +350,13 @@ int _jxr_r_TILE_SPATIAL_stripe(jxr_image_t image, struct rbitstream*str,
 	  if (plane->bands_present!=3) {
 	    if (plane->num_lp_qps>1 && !plane->lp_use_dc_qp) {
 	      qp_index_lp = _jxr_DECODE_QP_INDEX(str, plane->num_lp_qps);
-	      DEBUG(" DECODE_QP_INDEX(%d) --> %u (LP)\n", plane->num_lp_qps, qp_index_lp);
+	      DBG(" DECODE_QP_INDEX(%d) --> %u (LP)\n", plane->num_lp_qps, qp_index_lp);
 	    }
 	    qp_index_hp = 0;
 	    if (plane->bands_present!=2 && plane->num_hp_qps>1) {
 	      if (!plane->hp_use_lp_qp) {
 		qp_index_hp = _jxr_DECODE_QP_INDEX(str, plane->num_hp_qps);
-		DEBUG(" DECODE_QP_INDEX(%d) --> %u (HP)\n", plane->num_hp_qps, qp_index_hp);
+		DBG(" DECODE_QP_INDEX(%d) --> %u (HP)\n", plane->num_hp_qps, qp_index_hp);
 	      }
 	      else {
 		qp_index_hp = qp_index_lp;
@@ -366,10 +366,10 @@ int _jxr_r_TILE_SPATIAL_stripe(jxr_image_t image, struct rbitstream*str,
 	  for (ch = 0 ; ch < plane->num_channels ; ch += 1) {
 	    /* Save the LP Quant *INDEX* here. Prediction needs it. */
 	    MACROBLK_CUR_LP_QUANT(plane,ch,tx,mx) = qp_index_lp;
-	    DEBUG(" LP_QUANT INDEX for tx=%u ty=%u ch=%u MBx=%d is %d\n", tx, ty, ch, mx,
+	    DBG(" LP_QUANT INDEX for tx=%u ty=%u ch=%u MBx=%d is %d\n", tx, ty, ch, mx,
 		  MACROBLK_CUR_LP_QUANT(plane,ch,tx,mx));
 	    MACROBLK_CUR_HP_QUANT(plane,ch,tx,mx) = plane->hp_quant_ch[ch][qp_index_hp];
-	    DEBUG(" HP_QUANT VALUE for tx=%u ty=%u ch=%u MBx=%d is %d\n", tx, ty, ch, mx,
+	    DBG(" HP_QUANT VALUE for tx=%u ty=%u ch=%u MBx=%d is %d\n", tx, ty, ch, mx,
 		  MACROBLK_CUR_HP_QUANT(plane,ch,tx,mx));
 	  }
 	  
@@ -380,12 +380,12 @@ int _jxr_r_TILE_SPATIAL_stripe(jxr_image_t image, struct rbitstream*str,
 	    if (plane->bands_present != 2 /* NOHIGHPASS */) {
 	      rc = _jxr_r_MB_CBP(plane, str, plane_idx, tx, ty, mx, my);
 	      if (rc < 0) {
-		DEBUG("r_MB_CBP returned ERROR rc=%d\n", rc);
+		DBG("r_MB_CBP returned ERROR rc=%d\n", rc);
 		return rc;
 	      }
 	      rc = _jxr_r_MB_HP(plane, str, plane_idx, tx, ty, mx, my);
 	      if (rc < 0) {
-		DEBUG("r_MB_HP returned ERROR rc=%d\n", rc);
+		DBG("r_MB_HP returned ERROR rc=%d\n", rc);
 		return rc;
 	      }
 	    }
@@ -444,7 +444,7 @@ int _jxr_r_TILE_SPATIAL_stripe(jxr_image_t image, struct rbitstream*str,
   case 1:
     /* Flush the remaining strips to output. */
     if (tx+1 == image->tile_columns && ty+1 == image->tile_rows) {
-      DEBUG(" Cleanup flush after last tile (tx=%d, ty=%d)\n", tx, ty);
+      DBG(" Cleanup flush after last tile (tx=%d, ty=%d)\n", tx, ty);
       if (ALPHACHANNEL_FLAG(image))
 	_jxr_rflush_mb_strip(image->alpha, tx, ty, image->spatial_mb_height);
       _jxr_rflush_mb_strip(image, tx, ty, image->spatial_mb_height);

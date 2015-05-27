@@ -144,7 +144,7 @@ void initialize_index_table(jxr_image_t image)
 
     assert(image->tile_index_table == 0);
     image->tile_index_table = (int64_t*)calloc(num_index_table_entries, sizeof(int64_t));
-    DEBUG(" INDEX_TABLE has %d table entries\n", num_index_table_entries);
+    DBG(" INDEX_TABLE has %d table entries\n", num_index_table_entries);
 }
 
 static int fill_in_image_defaults(jxr_image_t image)
@@ -269,7 +269,7 @@ static int fill_in_image_defaults(jxr_image_t image)
             min_width = 2;
         for ( idx = 0 ; idx < image->tile_columns - 1 ; idx++ ) {
             if (image->tile_column_width[idx] < min_width) {
-                DEBUG(" Tile %d width is below minimum width\n", idx);
+                DBG(" Tile %d width is below minimum width\n", idx);
                 assert(0);
                 break;
             }
@@ -277,7 +277,7 @@ static int fill_in_image_defaults(jxr_image_t image)
             total_width += image->tile_column_width[idx];
         }
         if ((total_width + min_width) > width_MB) {
-            DEBUG(" Total specified tile width is above image width\n");
+            DBG(" Total specified tile width is above image width\n");
             assert(0);
         }
         image->tile_column_position[image->tile_columns - 1] = total_width;
@@ -297,7 +297,7 @@ static int fill_in_image_defaults(jxr_image_t image)
 
         for ( idx = 0 ; idx < image->tile_rows - 1 ; idx++ ) {
             if (image->tile_row_height[idx] < min_height) {
-                DEBUG(" Tile %d height is below minimum height\n", idx);
+                DBG(" Tile %d height is below minimum height\n", idx);
                 assert(0);
                 break;
             }
@@ -305,7 +305,7 @@ static int fill_in_image_defaults(jxr_image_t image)
             total_height += image->tile_row_height[idx];
         }
         if ((total_height + min_height) > height_MB) {
-            DEBUG(" Total specified tile height is above image height\n");
+            DBG(" Total specified tile height is above image height\n");
             assert(0);
         }
         image->tile_row_position[image->tile_rows - 1] = total_height;
@@ -405,7 +405,7 @@ int jxr_write_image_bitstream(jxr_image_t image, FILE*fd)
                 _jxr_wbitstream_uint8(&bits, 0); /* RESERVED_A_BYTE */
         }
 
-        DEBUG("MARK HERE as the tile base. bitpos=%zu\n", _jxr_wbitstream_bitpos(&bits));
+        DBG("MARK HERE as the tile base. bitpos=%zu\n", _jxr_wbitstream_bitpos(&bits));
         _jxr_wbitstream_mark(&bits);
 
         struct rbitstream strCodedTilesRead;
@@ -435,7 +435,7 @@ int jxr_write_image_bitstream(jxr_image_t image, FILE*fd)
                 _jxr_wbitstream_uint8(&bits, 0); /* RESERVED_A_BYTE */
         }
 
-        DEBUG("MARK HERE as the tile base. bitpos=%zu\n", _jxr_wbitstream_bitpos(&bits));
+        DBG("MARK HERE as the tile base. bitpos=%zu\n", _jxr_wbitstream_bitpos(&bits));
         _jxr_wbitstream_mark(&bits);
 
         /* CODED_TILES() */
@@ -446,9 +446,9 @@ int jxr_write_image_bitstream(jxr_image_t image, FILE*fd)
 
 #ifdef VERIFY_16BIT
     if(image->lwf_test == 0)
-        DEBUG("Meets conditions for LONG_WORD_FLAG == 0!");
+        DBG("Meets conditions for LONG_WORD_FLAG == 0!");
     else {
-        DEBUG("Does not meet conditions for LONG_WORD_FLAG == 0!");
+        DBG("Does not meet conditions for LONG_WORD_FLAG == 0!");
         if (LONG_WORD_FLAG(image) == 0)
             return JXR_EC_BADFORMAT;
     }
@@ -457,7 +457,7 @@ int jxr_write_image_bitstream(jxr_image_t image, FILE*fd)
     return res;
 }
 
-#if defined(DETAILED_DEBUG)
+#if defined(DETAILED_DBG)
 static const char*bitdepth_names[16] = {
     "BD1WHITE1", "BD8", "BD16", "BD16S",
     "BD16F", "RESERVED5", "BD32S", "BD32F",
@@ -478,7 +478,7 @@ static int w_image_header(jxr_image_t image, struct wbitstream*str)
         _jxr_wbitstream_uint8(str, GDI_SIG[idx]);
     }
 
-    DEBUG("START IMAGE_HEADER (bitpos=%zu)\n", _jxr_wbitstream_bitpos(str));
+    DBG("START IMAGE_HEADER (bitpos=%zu)\n", _jxr_wbitstream_bitpos(str));
 
     _jxr_wbitstream_uint4(str, 1); /* VERSION_INFO */
 
@@ -486,32 +486,32 @@ static int w_image_header(jxr_image_t image, struct wbitstream*str)
 
     _jxr_wbitstream_uint3(str, 1); /* SUB_VERSION_INFO */
 
-    DEBUG(" Flags group1=0x%02x\n", image->header_flags1);
+    DBG(" Flags group1=0x%02x\n", image->header_flags1);
     _jxr_wbitstream_uint8(str, image->header_flags1);
 
-    DEBUG(" Flags group2=0x%02x\n", image->header_flags2);
+    DBG(" Flags group2=0x%02x\n", image->header_flags2);
     _jxr_wbitstream_uint8(str, image->header_flags2);
 
-    DEBUG(" OUTPUT_CLR_FMT=%d\n", SOURCE_CLR_FMT(image));
-    DEBUG(" OUTPUT_BITEDPTH=%d (%s)\n", SOURCE_BITDEPTH(image), bitdepth_names[SOURCE_BITDEPTH(image)]);
+    DBG(" OUTPUT_CLR_FMT=%d\n", SOURCE_CLR_FMT(image));
+    DBG(" OUTPUT_BITEDPTH=%d (%s)\n", SOURCE_BITDEPTH(image), bitdepth_names[SOURCE_BITDEPTH(image)]);
     _jxr_wbitstream_uint8(str, image->header_flags_fmt);
 
     if (SHORT_HEADER_FLAG(image)) {
-        DEBUG(" SHORT_HEADER_FLAG=true\n");
+        DBG(" SHORT_HEADER_FLAG=true\n");
         _jxr_wbitstream_uint16(str, image->width1);
         _jxr_wbitstream_uint16(str, image->height1);
     } else {
-        DEBUG(" SHORT_HEADER_FLAG=false\n");
+        DBG(" SHORT_HEADER_FLAG=false\n");
         _jxr_wbitstream_uint32(str, image->width1);
         _jxr_wbitstream_uint32(str, image->height1);
     }
 
-    DEBUG(" Image dimensions: %u x %u\n", image->width1+1, image->height1+1);
+    DBG(" Image dimensions: %u x %u\n", image->width1+1, image->height1+1);
 
     /* Write TILE geometry information, if there is TILING. */
     if (jxr_get_TILING_FLAG(image)) {
 
-        DEBUG(" TILING %u columns, %u rows\n",
+        DBG(" TILING %u columns, %u rows\n",
             image->tile_columns, image->tile_rows);
 
         _jxr_wbitstream_uint12(str, image->tile_columns -1);
@@ -530,18 +530,18 @@ static int w_image_header(jxr_image_t image, struct wbitstream*str)
                 _jxr_wbitstream_uint16(str,image->tile_row_height[idx]);
         }
     } else {
-        DEBUG(" NO TILING\n");
+        DBG(" NO TILING\n");
     }
 
-#if defined(DETAILED_DEBUG)
-    DEBUG(" Tile widths:");
+#if defined(DETAILED_DBG)
+    DBG(" Tile widths:");
     for (idx = 0 ; idx < image->tile_columns ; idx += 1)
-        DEBUG(" %u", image->tile_column_width[idx]);
-    DEBUG("\n");
-    DEBUG(" Tile heights:");
+        DBG(" %u", image->tile_column_width[idx]);
+    DBG("\n");
+    DBG(" Tile heights:");
     for (idx = 0 ; idx < image->tile_rows ; idx += 1)
-        DEBUG(" %u", image->tile_row_height[idx]);
-    DEBUG("\n");
+        DBG(" %u", image->tile_row_height[idx]);
+    DBG("\n");
 #endif
 
     /* Write out windowing bits. */
@@ -552,17 +552,17 @@ static int w_image_header(jxr_image_t image, struct wbitstream*str)
         _jxr_wbitstream_uint6(str, (uint8_t)image->window_extra_right);
     }
 
-    DEBUG("END IMAGE_HEADER\n");
+    DBG("END IMAGE_HEADER\n");
     return res;
 }
 
 static int w_image_plane_header(jxr_image_t image, struct wbitstream*str, int alpha)
 {
-    DEBUG("START IMAGE_PLANE_HEADER (bitpos=%zu)\n", _jxr_wbitstream_bitpos(str));
+    DBG("START IMAGE_PLANE_HEADER (bitpos=%zu)\n", _jxr_wbitstream_bitpos(str));
 
-    DEBUG(" INTERNAL_CLR_FMT = %d\n", image->use_clr_fmt);
-    DEBUG(" SCALED_FLAG = %s\n", image->scaled_flag? "true" : "false");
-    DEBUG(" BANDS_PRESENT = %d\n", image->bands_present);
+    DBG(" INTERNAL_CLR_FMT = %d\n", image->use_clr_fmt);
+    DBG(" SCALED_FLAG = %s\n", image->scaled_flag? "true" : "false");
+    DBG(" BANDS_PRESENT = %d\n", image->bands_present);
 
     _jxr_wbitstream_uint3(str, image->use_clr_fmt);
     _jxr_wbitstream_uint1(str, image->scaled_flag); /* SCALED_FLAG = 1 */
@@ -624,7 +624,7 @@ static int w_image_plane_header(jxr_image_t image, struct wbitstream*str, int al
     /* Emit QP information for DC pass. */
     _jxr_wbitstream_uint1(str, image->dc_frame_uniform); /* DC_FRAME_UNIFORM */
     if (image->dc_frame_uniform) {
-        DEBUG(" DC_FRAME_UNIFORM = %s\n", image->dc_frame_uniform?"true":"false");
+        DBG(" DC_FRAME_UNIFORM = %s\n", image->dc_frame_uniform?"true":"false");
         _jxr_w_DC_QP(image, str);
     }
 
@@ -632,7 +632,7 @@ static int w_image_plane_header(jxr_image_t image, struct wbitstream*str, int al
         /* Emit QP information for LP pass. */
         _jxr_wbitstream_uint1(str, 0); /* RESERVED_I_BIT */
         _jxr_wbitstream_uint1(str, image->lp_frame_uniform);
-        DEBUG(" LP_FRAME_UNIFORM = %s\n", image->lp_frame_uniform?"true":"false");
+        DBG(" LP_FRAME_UNIFORM = %s\n", image->lp_frame_uniform?"true":"false");
         if (image->lp_frame_uniform) {
             assert(image->num_lp_qps > 0);
             /* _jxr_wbitstream_uint4(str, image->num_lp_qps-1); */
@@ -643,7 +643,7 @@ static int w_image_plane_header(jxr_image_t image, struct wbitstream*str, int al
             /* Emit QP information for HP pass. */
             _jxr_wbitstream_uint1(str, 0); /* RESERVED_J_BIT */
             _jxr_wbitstream_uint1(str, image->hp_frame_uniform);
-            DEBUG(" HP_FRAME_UNIFORM = %s\n", image->hp_frame_uniform?"true":"false");
+            DBG(" HP_FRAME_UNIFORM = %s\n", image->hp_frame_uniform?"true":"false");
             if (image->hp_frame_uniform) {
                 _jxr_w_HP_QP(image, str);
             }
@@ -651,7 +651,7 @@ static int w_image_plane_header(jxr_image_t image, struct wbitstream*str, int al
     }
 
     _jxr_wbitstream_syncbyte(str);
-    DEBUG("END IMAGE_PLANE_HEADER (bitpos=%zu)\n", _jxr_wbitstream_bitpos(str));
+    DBG("END IMAGE_PLANE_HEADER (bitpos=%zu)\n", _jxr_wbitstream_bitpos(str));
 
     return 0;
 }
@@ -673,22 +673,22 @@ void _jxr_w_DC_QP(jxr_image_t image, struct wbitstream*str)
 {
     int idx;
     int ch_mode = put_ch_mode(image, str);
-    DEBUG(" DC_QP CH_MODE=%d ", ch_mode);
+    DBG(" DC_QP CH_MODE=%d ", ch_mode);
 
     switch (ch_mode) {
         case 0: /* UNIFORM */
-            DEBUG(" DC_QUANT UNIFORM =%u", image->dc_quant_ch[0]);
+            DBG(" DC_QUANT UNIFORM =%u", image->dc_quant_ch[0]);
             _jxr_wbitstream_uint8(str, image->dc_quant_ch[0]);
             break;
         case 1: /* SEPARATE */
-            DEBUG(" DC_QUANT SEPARATE Y=%u, Chr=%u", image->dc_quant_ch[0],image->dc_quant_ch[1]);
+            DBG(" DC_QUANT SEPARATE Y=%u, Chr=%u", image->dc_quant_ch[0],image->dc_quant_ch[1]);
             _jxr_wbitstream_uint8(str, image->dc_quant_ch[0]);
             _jxr_wbitstream_uint8(str, image->dc_quant_ch[1]);
             break;
         case 2: /* INDEPENDENT */
-            DEBUG(" DC_QUANT INDEPENDENT =");
+            DBG(" DC_QUANT INDEPENDENT =");
             for (idx = 0 ; idx < image->num_channels ; idx +=1) {
-                DEBUG(" %u", image->dc_quant_ch[idx]);
+                DBG(" %u", image->dc_quant_ch[idx]);
                 _jxr_wbitstream_uint8(str, image->dc_quant_ch[idx]);
             }
             break;
@@ -698,7 +698,7 @@ void _jxr_w_DC_QP(jxr_image_t image, struct wbitstream*str)
             assert(0);
             break;
     }
-    DEBUG("\n");
+    DBG("\n");
 }
 
 void _jxr_w_LP_QP(jxr_image_t image, struct wbitstream*str)
@@ -706,23 +706,23 @@ void _jxr_w_LP_QP(jxr_image_t image, struct wbitstream*str)
     unsigned idx;
     for (idx = 0 ; idx < image->num_lp_qps ; idx += 1) {
         int ch_mode = put_ch_mode(image, str);
-        DEBUG(" LP_QP[%d] CH_MODE=%d ", idx, ch_mode);
+        DBG(" LP_QP[%d] CH_MODE=%d ", idx, ch_mode);
 
         switch (ch_mode) {
             case 0: /* UNIFORM */
-                DEBUG(" LP_QUANT UNIFORM =%u", image->lp_quant_ch[0][idx]);
+                DBG(" LP_QUANT UNIFORM =%u", image->lp_quant_ch[0][idx]);
                 _jxr_wbitstream_uint8(str, image->lp_quant_ch[0][idx]);
                 break;
             case 1: /* SEPARATE */
-                DEBUG(" LP_QUANT SEPARATE Y=%u, Chr=%u", image->lp_quant_ch[0][idx],image->lp_quant_ch[1][idx]);
+                DBG(" LP_QUANT SEPARATE Y=%u, Chr=%u", image->lp_quant_ch[0][idx],image->lp_quant_ch[1][idx]);
                 _jxr_wbitstream_uint8(str, image->lp_quant_ch[0][idx]);
                 _jxr_wbitstream_uint8(str, image->lp_quant_ch[1][idx]);
                 break;
             case 2: /* INDEPENDENT */
-                DEBUG(" LP_QUANT INDEPENDENT =");
+                DBG(" LP_QUANT INDEPENDENT =");
                 int ch;
                 for (ch = 0 ; ch < image->num_channels ; ch +=1) {
-                    DEBUG(" %u", image->lp_quant_ch[ch][idx]);
+                    DBG(" %u", image->lp_quant_ch[ch][idx]);
                     _jxr_wbitstream_uint8(str, image->lp_quant_ch[ch][idx]);
                 }
                 break;
@@ -732,7 +732,7 @@ void _jxr_w_LP_QP(jxr_image_t image, struct wbitstream*str)
                 assert(0);
                 break;
         }
-        DEBUG("\n");
+        DBG("\n");
     }
 }
 
@@ -741,23 +741,23 @@ void _jxr_w_HP_QP(jxr_image_t image, struct wbitstream*str)
     unsigned idx;
     for (idx = 0 ; idx < image->num_hp_qps ; idx += 1) {
         int ch_mode = put_ch_mode(image, str);
-        DEBUG(" HP_QP[%d] CH_MODE=%d ", idx, ch_mode);
+        DBG(" HP_QP[%d] CH_MODE=%d ", idx, ch_mode);
 
         switch (ch_mode) {
             case 0: /* UNIFORM */
                 _jxr_wbitstream_uint8(str, image->hp_quant_ch[0][idx]);
-                DEBUG("UNIFORM %d", image->hp_quant_ch[0][idx]);
+                DBG("UNIFORM %d", image->hp_quant_ch[0][idx]);
                 break;
             case 1: /* SEPARATE */
-                DEBUG("SEPARATE Y=%u, Chr=%u", image->hp_quant_ch[0][idx],image->hp_quant_ch[1][idx]);
+                DBG("SEPARATE Y=%u, Chr=%u", image->hp_quant_ch[0][idx],image->hp_quant_ch[1][idx]);
                 _jxr_wbitstream_uint8(str, image->hp_quant_ch[0][idx]);
                 _jxr_wbitstream_uint8(str, image->hp_quant_ch[1][idx]);
                 break;
             case 2: /* INDEPENDENT */
-                DEBUG("INDEPENDENT =");
+                DBG("INDEPENDENT =");
                 int ch;
                 for (ch = 0 ; ch < image->num_channels ; ch +=1) {
-                    DEBUG(" %u", image->hp_quant_ch[ch][idx]);
+                    DBG(" %u", image->hp_quant_ch[ch][idx]);
                     _jxr_wbitstream_uint8(str, image->hp_quant_ch[ch][idx]);
                 }
                 break;
@@ -766,17 +766,17 @@ void _jxr_w_HP_QP(jxr_image_t image, struct wbitstream*str)
             default:
                 assert(0);
         }
-        DEBUG(" bitpos=%zu\n", _jxr_wbitstream_bitpos(str));
+        DBG(" bitpos=%zu\n", _jxr_wbitstream_bitpos(str));
     }
 }
 
 static void w_INDEX_TABLE(jxr_image_t image, struct wbitstream*str)
 {
-    DEBUG("START INDEX_TABLE at bitpos=%zu\n", _jxr_wbitstream_bitpos(str));
+    DBG("START INDEX_TABLE at bitpos=%zu\n", _jxr_wbitstream_bitpos(str));
 
     if (INDEXTABLE_PRESENT_FLAG(image)) {
         /* INDEX_TABLE_STARTCODE == 0x0001 */
-        DEBUG(" INDEX_TAB:E_STARTCODE at bitpos=%zu\n", _jxr_wbitstream_bitpos(str));
+        DBG(" INDEX_TAB:E_STARTCODE at bitpos=%zu\n", _jxr_wbitstream_bitpos(str));
         _jxr_wbitstream_uint8(str, 0x00);
         _jxr_wbitstream_uint8(str, 0x01);
 
@@ -785,11 +785,11 @@ static void w_INDEX_TABLE(jxr_image_t image, struct wbitstream*str)
             _jxr_wbitstream_intVLW(str, image->tile_index_table[idx]);
         }
 
-        DEBUG(" INDEX_TABLE has %d table entries\n", image->tile_index_table_length);
+        DBG(" INDEX_TABLE has %d table entries\n", image->tile_index_table_length);
 
     }
 
-    DEBUG("INTEX_TABLE DONE bitpos=%zu\n", _jxr_wbitstream_bitpos(str));
+    DBG("INTEX_TABLE DONE bitpos=%zu\n", _jxr_wbitstream_bitpos(str));
 }
 
 static uint64_t w_PROFILE_LEVEL_INFO(jxr_image_t image, struct wbitstream*str, uint64_t bytes) 
@@ -982,7 +982,7 @@ void _jxr_w_TILE_HEADER_LOWPASS(jxr_image_t image, struct wbitstream*str,
 
         _jxr_wbitstream_uint1(str, 0); /* XXXX USE_DC_QP == FALSE */
         assert(image->num_lp_qps > 0);
-        DEBUG(" TILE_HEADER_LP: NUM_LP_QPS = %d\n", image->num_lp_qps);
+        DBG(" TILE_HEADER_LP: NUM_LP_QPS = %d\n", image->num_lp_qps);
         _jxr_wbitstream_uint4(str, image->num_lp_qps-1);
         _jxr_w_LP_QP(image, str);
     }
@@ -1104,11 +1104,11 @@ void _jxr_w_MB_DC(jxr_image_t image, struct wbitstream*str,
     lap_mean[0] = 0;
     lap_mean[1] = 0;
 
-    DEBUG(" MB_DC tile=[%u %u] mb=[%u %u] bitpos=%zu\n",
+    DBG(" MB_DC tile=[%u %u] mb=[%u %u] bitpos=%zu\n",
         tx, ty, mx, my, _jxr_wbitstream_bitpos(str));
 
     if (_jxr_InitContext(image, tx, ty, mx, my)) {
-        DEBUG(" MB_DC: Initialize Context\n");
+        DBG(" MB_DC: Initialize Context\n");
         _jxr_InitVLCTable(image, AbsLevelIndDCLum);
         _jxr_InitVLCTable(image, AbsLevelIndDCChr);
         _jxr_InitializeModelMB(&image->model_dc, 0/*DC*/);
@@ -1126,12 +1126,12 @@ void _jxr_w_MB_DC(jxr_image_t image, struct wbitstream*str,
 
             unsigned is_dc_ch = (labs(dc_val)>>model_bits) != 0 ? 1 : 0;
             _jxr_wbitstream_uint1(str, is_dc_ch);
-            DEBUG(" MB_DC: IS_DC_CH=%u, model_bits=%d\n",
+            DBG(" MB_DC: IS_DC_CH=%u, model_bits=%d\n",
                 is_dc_ch, model_bits);
             if (is_dc_ch) {
                 lap_mean[m] += 1;
             }
-            DEBUG(" dc_val at t=[%u %u], m=[%u %u] == %d (0x%08x)\n",
+            DBG(" dc_val at t=[%u %u], m=[%u %u] == %d (0x%08x)\n",
                 tx, ty, mx, my, dc_val, dc_val);
             w_DEC_DC(image, str, model_bits, 0/*chroma*/, is_dc_ch, dc_val);
         }
@@ -1154,22 +1154,22 @@ void _jxr_w_MB_DC(jxr_image_t image, struct wbitstream*str,
             lap_mean[1] += 1;
         }
 
-        DEBUG(" VAL_DC_YUV = %x\n", val_dc_yuv);
+        DBG(" VAL_DC_YUV = %x\n", val_dc_yuv);
         encode_val_dc_yuv(image, str, val_dc_yuv);
 
-        DEBUG(" dc_val_Y at t=[%u %u], m=[%u %u] == %d (0x%08x)\n",
+        DBG(" dc_val_Y at t=[%u %u], m=[%u %u] == %d (0x%08x)\n",
             tx, ty, mx, my, dc_val_Y, dc_val_Y);
         int model_bits = image->model_dc.bits[0];
         int is_dc_ch = val_dc_yuv&0x4 ? 1 : 0;
         w_DEC_DC(image, str, model_bits, 0/*chroma*/, is_dc_ch, dc_val_Y);
 
-        DEBUG(" dc_val_U at t=[%u %u], m=[%u %u] == %d (0x%08x)\n",
+        DBG(" dc_val_U at t=[%u %u], m=[%u %u] == %d (0x%08x)\n",
             tx, ty, mx, my, dc_val_U, dc_val_U);
         model_bits = image->model_dc.bits[1];
         is_dc_ch = val_dc_yuv&0x2 ? 1 : 0;
         w_DEC_DC(image, str, model_bits, 1/*chroma*/, is_dc_ch, dc_val_U);
 
-        DEBUG(" dc_val_V at t=[%u %u], m=[%u %u] == %d (0x%08x)\n",
+        DBG(" dc_val_V at t=[%u %u], m=[%u %u] == %d (0x%08x)\n",
             tx, ty, mx, my, dc_val_V, dc_val_V);
         model_bits = image->model_dc.bits[1];
         is_dc_ch = val_dc_yuv&0x1 ? 1 : 0;
@@ -1177,15 +1177,15 @@ void _jxr_w_MB_DC(jxr_image_t image, struct wbitstream*str,
     }
 
     /* */
-    DEBUG(" MB_DC: UpdateModelMB: lap_mean={%u %u}\n", lap_mean[0], lap_mean[1]);
+    DBG(" MB_DC: UpdateModelMB: lap_mean={%u %u}\n", lap_mean[0], lap_mean[1]);
     _jxr_UpdateModelMB(image, lap_mean, &image->model_dc, 0/*DC*/);
     if (_jxr_ResetContext(image, tx, mx)) {
-        DEBUG(" MB_DC: Reset Context\n");
+        DBG(" MB_DC: Reset Context\n");
         _jxr_AdaptVLCTable(image, AbsLevelIndDCLum);
         _jxr_AdaptVLCTable(image, AbsLevelIndDCChr);
     }
 
-    DEBUG(" MB_DC DONE tile=[%u %u] mb=[%u %u]\n", tx, ty, mx, my);
+    DBG(" MB_DC DONE tile=[%u %u] mb=[%u %u]\n", tx, ty, mx, my);
 }
 
 static void w_REFINE_LP(struct wbitstream*str, int coeff, int model_bits)
@@ -1316,7 +1316,7 @@ static int RunLengthEncode(jxr_image_t image, int RLCoeffs[32], const int LPInpu
     int rl_index = 0;
     int run_count = 0;
 
-    DEBUG(" RLCoeffs:");
+    DBG(" RLCoeffs:");
     while (lp_index < 16) {
         if (LPInput[lp_index] == 0) {
             lp_index += 1;
@@ -1328,14 +1328,14 @@ static int RunLengthEncode(jxr_image_t image, int RLCoeffs[32], const int LPInpu
         RLCoeffs[rl_index+0] = run_count;
         RLCoeffs[rl_index+1] = LPInput[lp_index];
 
-        DEBUG(" %d--0x%x", RLCoeffs[rl_index+0], RLCoeffs[rl_index+1]);
+        DBG(" %d--0x%x", RLCoeffs[rl_index+0], RLCoeffs[rl_index+1]);
 
         rl_index += 2;
         run_count = 0;
         lp_index += 1;
     }
 
-    DEBUG(" num_non_zero=%d\n", rl_index/2);
+    DBG(" num_non_zero=%d\n", rl_index/2);
 
     /* Return the number of non-zero values. */
     return rl_index/2;
@@ -1392,11 +1392,11 @@ void _jxr_w_MB_LP(jxr_image_t image, struct wbitstream*str,
     lap_mean[0] = 0;
     lap_mean[1] = 0;
 
-    DEBUG(" MB_LP tile=[%u %u] mb=[%u %u] bitpos=%zu\n",
+    DBG(" MB_LP tile=[%u %u] mb=[%u %u] bitpos=%zu\n",
         tx, ty, mx, my, _jxr_wbitstream_bitpos(str));
 
     if (_jxr_InitContext(image, tx, ty, mx, my)) {
-        DEBUG(" Init contexts\n");
+        DBG(" Init contexts\n");
         _jxr_InitializeCountCBPLP(image);
         _jxr_InitLPVLC(image);
         _jxr_InitializeAdaptiveScanLP(image);
@@ -1451,7 +1451,7 @@ void _jxr_w_MB_LP(jxr_image_t image, struct wbitstream*str,
                 break;
         }
 
-        DEBUG(" MB_LP: count_zero_CBPLP=%d, count_max_CBPLP=%d, bitpos=%zu\n",
+        DBG(" MB_LP: count_zero_CBPLP=%d, count_max_CBPLP=%d, bitpos=%zu\n",
             image->count_zero_CBPLP, image->count_max_CBPLP, _jxr_wbitstream_bitpos(str));
         if (image->count_zero_CBPLP <= 0 || image->count_max_CBPLP < 0) {
             int cbplp_yuv;
@@ -1512,7 +1512,7 @@ void _jxr_w_MB_LP(jxr_image_t image, struct wbitstream*str,
             int chroma_flag = ch > 0? 1 : 0;
             int model_bits = image->model_lp.bits[chroma_flag];
 
-            DEBUG(" MB_LP: ch=%d, model_bits=%d\n", ch, model_bits);
+            DBG(" MB_LP: ch=%d, model_bits=%d\n", ch, model_bits);
 
             int num_non_zero = collect_lp_input(image, ch, tx, mx, LPInput, model_bits);
 
@@ -1527,58 +1527,58 @@ void _jxr_w_MB_LP(jxr_image_t image, struct wbitstream*str,
             }
         }
     }
-    DEBUG(" MB_LP: cbplp = 0x%x (full_planes=%u)\n", cbplp, full_planes);
+    DBG(" MB_LP: cbplp = 0x%x (full_planes=%u)\n", cbplp, full_planes);
 
     int ndx;
     for (ndx = 0 ; ndx < full_planes ; ndx += 1) {
         const int chroma_flag = ndx>0? 1 : 0;
 
-        DEBUG(" MB_LP: process full_plane %u, CBPLP for plane=%d, bitpos=%zu\n",
+        DBG(" MB_LP: process full_plane %u, CBPLP for plane=%d, bitpos=%zu\n",
             ndx, (cbplp>>ndx)&1, _jxr_wbitstream_bitpos(str));
-#if defined(DETAILED_DEBUG)
+#if defined(DETAILED_DBG)
         if (chroma_flag && image->use_clr_fmt == 2/*YUV422*/) {
             int k;
-            DEBUG(" lp val[ndx=%d] refined data ==", ndx);
+            DBG(" lp val[ndx=%d] refined data ==", ndx);
             for (k = 1 ; k<8; k+=1) {
-                DEBUG(" 0x%x/0x%x", MACROBLK_CUR_LP(image,1,tx,mx,k-1), MACROBLK_CUR_LP(image,2,tx,mx,k-1));
+                DBG(" 0x%x/0x%x", MACROBLK_CUR_LP(image,1,tx,mx,k-1), MACROBLK_CUR_LP(image,2,tx,mx,k-1));
             }
-            DEBUG("\n");
-            DEBUG(" lp val[ndx=%d] before LPPermute ==", ndx);
+            DBG("\n");
+            DBG(" lp val[ndx=%d] before LPPermute ==", ndx);
             for (k = 1 ; k<8; k+=1) {
-                DEBUG(" 0x%x/0x%x", LPInput[1][k], LPInput[2][k]);
+                DBG(" 0x%x/0x%x", LPInput[1][k], LPInput[2][k]);
             }
-            DEBUG("\n");
+            DBG("\n");
 
         } else if (chroma_flag && image->use_clr_fmt == 1/*YUV420*/) {
             int k;
-            DEBUG(" lp val[ndx=%d] before LPPermute ==", ndx);
+            DBG(" lp val[ndx=%d] before LPPermute ==", ndx);
             for (k = 1 ; k<4; k+=1) {
-                DEBUG(" 0x%x/0x%x", LPInput[1][k], LPInput[2][k]);
+                DBG(" 0x%x/0x%x", LPInput[1][k], LPInput[2][k]);
             }
-            DEBUG("\n");
+            DBG("\n");
 
         } else {
             int k;
-            DEBUG(" lp val[ndx=%d] refined data ==", ndx);
+            DBG(" lp val[ndx=%d] refined data ==", ndx);
             for (k = 1 ; k<16; k+=1) {
-                DEBUG(" 0x%x", MACROBLK_CUR_LP(image,ndx,tx,mx,k-1));
+                DBG(" 0x%x", MACROBLK_CUR_LP(image,ndx,tx,mx,k-1));
             }
-            DEBUG("\n");
-            DEBUG(" lp val[ndx=%d] before LPPermute ==", ndx);
+            DBG("\n");
+            DBG(" lp val[ndx=%d] before LPPermute ==", ndx);
             for (k = 1 ; k<16; k+=1) {
-                DEBUG(" 0x%x", LPInput[ndx][k]);
+                DBG(" 0x%x", LPInput[ndx][k]);
             }
-            DEBUG("\n");
-            DEBUG(" scan order ==");
+            DBG("\n");
+            DBG(" scan order ==");
             for (k = 0 ; k<15; k+=1) {
-                DEBUG(" %2d", image->lopass_scanorder[k]);
+                DBG(" %2d", image->lopass_scanorder[k]);
             }
-            DEBUG("\n");
-            DEBUG(" scan totals ==");
+            DBG("\n");
+            DBG(" scan totals ==");
             for (k = 0 ; k<15; k+=1) {
-                DEBUG(" %2d", image->lopass_scantotals[k]);
+                DBG(" %2d", image->lopass_scantotals[k]);
             }
-            DEBUG("\n");
+            DBG("\n");
         }
 #endif
         /* If there are coeff bits, encode them. */
@@ -1605,7 +1605,7 @@ void _jxr_w_MB_LP(jxr_image_t image, struct wbitstream*str,
 
         int model_bits = image->model_lp.bits[chroma_flag];
         if (model_bits) {
-            DEBUG(" MB_LP: Start refine ndx=%d, model_bits=%d, bitpos=%zu\n",
+            DBG(" MB_LP: Start refine ndx=%d, model_bits=%d, bitpos=%zu\n",
                 ndx, model_bits, _jxr_wbitstream_bitpos(str));
             static const int transpose444[16] = { 0, 4, 8,12,
                 1, 5, 9,13,
@@ -1623,7 +1623,7 @@ void _jxr_w_MB_LP(jxr_image_t image, struct wbitstream*str,
                     case 1: /* YUV420 */
                         for (k=1 ; k<4; k+=1) {
                             int k_ptr = transpose420[k];
-                            DEBUG(" MP_LP: Refine LP_Input[1/2][%d] = 0x%x/0x%x bitpos=%zu\n",
+                            DBG(" MP_LP: Refine LP_Input[1/2][%d] = 0x%x/0x%x bitpos=%zu\n",
                                 k_ptr, LPInput[1][k_ptr], LPInput[2][k_ptr],
                                 _jxr_wbitstream_bitpos(str));
                             w_REFINE_LP(str, MACROBLK_CUR_LP(image,1,tx,mx,k_ptr-1), model_bits);
@@ -1633,7 +1633,7 @@ void _jxr_w_MB_LP(jxr_image_t image, struct wbitstream*str,
                     case 2: /* YUV422 */
                         for (k=1 ; k<8; k+=1) {
                             int k_ptr = transpose422[k];
-                            DEBUG(" MP_LP: Refine LP_Input[1/2][%d] = 0x%x/0x%x bitpos=%zu\n",
+                            DBG(" MP_LP: Refine LP_Input[1/2][%d] = 0x%x/0x%x bitpos=%zu\n",
                                 k_ptr, LPInput[1][k_ptr], LPInput[2][k_ptr],
                                 _jxr_wbitstream_bitpos(str));
                             w_REFINE_LP(str, MACROBLK_CUR_LP(image,1,tx,mx,k_ptr-1), model_bits);
@@ -1651,14 +1651,14 @@ void _jxr_w_MB_LP(jxr_image_t image, struct wbitstream*str,
         }
     }
 
-    DEBUG(" MB_LP: UpdateModelMB lap_mean={%d, %d}\n", lap_mean[0], lap_mean[1]);
+    DBG(" MB_LP: UpdateModelMB lap_mean={%d, %d}\n", lap_mean[0], lap_mean[1]);
     _jxr_UpdateModelMB(image, lap_mean, &image->model_lp, 1/*band=LP*/);
     if (_jxr_ResetContext(image, tx, mx)) {
-        DEBUG(" AdaptLP at the end of mx=%d (my=%d, ndx=%u)\n", mx, my, ndx);
+        DBG(" AdaptLP at the end of mx=%d (my=%d, ndx=%u)\n", mx, my, ndx);
         _jxr_AdaptLP(image);
     }
 
-    DEBUG(" MB_LP DONE tile=[%u %u] mb=[%u %u]\n", tx, ty, mx, my);
+    DBG(" MB_LP DONE tile=[%u %u] mb=[%u %u]\n", tx, ty, mx, my);
 }
 
 static void encode_val_1(jxr_image_t image, struct wbitstream*str,
@@ -1804,7 +1804,7 @@ struct adaptive_vlc_s*vlc, int val1, int chr_cbp)
             }
 
             if (tmp >= 5) {
-                DEBUG(" MB_CBP: CHR_CBP=%x\n", chr_cbp);
+                DBG(" MB_CBP: CHR_CBP=%x\n", chr_cbp);
                 assert(chr_cbp < 3);
                 switch (chr_cbp) {
                     case 0: /* 1 */
@@ -1822,7 +1822,7 @@ struct adaptive_vlc_s*vlc, int val1, int chr_cbp)
             if (tmp == 8) {
                 assert((val1 - tmp) <= 2);
                 int val_inc = val1 - tmp;
-                DEBUG(" MB_CBP: VAL_INC=%d\n", val_inc);
+                DBG(" MB_CBP: VAL_INC=%d\n", val_inc);
                 switch (val_inc) {
                     case 0: /* 1 */
                         _jxr_wbitstream_uint1(str, 1);
@@ -1846,11 +1846,11 @@ void _jxr_w_MB_CBP(jxr_image_t image, struct wbitstream*str,
                      unsigned tx, unsigned ty,
                      unsigned mx, unsigned my)
 {
-    DEBUG(" MB_CBP tile=[%u %u] mb=[%u %u] bitpos=%zu\n",
+    DBG(" MB_CBP tile=[%u %u] mb=[%u %u] bitpos=%zu\n",
         tx, ty, mx, my, _jxr_wbitstream_bitpos(str));
 
     if (_jxr_InitContext(image, tx, ty, mx, my)) {
-        DEBUG(" MB_CBP: InitContext\n");
+        DBG(" MB_CBP: InitContext\n");
         /* This happens only at the top left edge of the tile. */
         _jxr_InitCBPVLC(image);
     }
@@ -1959,7 +1959,7 @@ void _jxr_w_MB_CBP(jxr_image_t image, struct wbitstream*str,
                 break;
         }
 
-        DEBUG(" MB_CBP: diff_cbp[%d]=0x%x (HP_CBP=0x%x) cbp_block_mask=0x%x:%x:%x\n",
+        DBG(" MB_CBP: diff_cbp[%d]=0x%x (HP_CBP=0x%x) cbp_block_mask=0x%x:%x:%x\n",
             ch, diff_cbp[ch], MACROBLK_CUR_HPCBP(image,ch,tx,mx),
             cbp_Y_block_mask, cbp_U_block_mask, cbp_V_block_mask);
 
@@ -1968,7 +1968,7 @@ void _jxr_w_MB_CBP(jxr_image_t image, struct wbitstream*str,
         set. That tells the decoder to look for CBP values
         in any of the planes. */
         int cbp = cbp_Y_block_mask | cbp_U_block_mask | cbp_V_block_mask;
-        DEBUG(" MB_CBP: Refined CBP=0x%x\n", cbp);
+        DBG(" MB_CBP: Refined CBP=0x%x\n", cbp);
         w_REFINE_CBP(image, str, cbp);
 
         int block;
@@ -1981,7 +1981,7 @@ void _jxr_w_MB_CBP(jxr_image_t image, struct wbitstream*str,
             struct adaptive_vlc_s*vlc = image->vlc_table + DecNumBlkCBP;
             assert(vlc->deltatable == 0);
 
-            DEBUG(" MB_CBP: block=%d Use DecNumBlkCBP table=%d, discriminant=%d, bitpos=%zu\n",
+            DBG(" MB_CBP: block=%d Use DecNumBlkCBP table=%d, discriminant=%d, bitpos=%zu\n",
                 block, vlc->table, vlc->discriminant, _jxr_wbitstream_bitpos(str));
 
             /* This is the block of CBP bits to encode. The
@@ -2024,8 +2024,8 @@ void _jxr_w_MB_CBP(jxr_image_t image, struct wbitstream*str,
                     assert(val > 0);
                     int num_blkcbp = val-1;
 
-                    DEBUG(" MB_CBP: NUM_BLKCBP=%d, iVal=%d, iCode=%d\n", num_blkcbp, val, code);
-                    DEBUG(" MB_CBP: blkcbp=0x%x, code=%d for chunk blk=%d\n", blkcbp, code, block);
+                    DBG(" MB_CBP: NUM_BLKCBP=%d, iVal=%d, iCode=%d\n", num_blkcbp, val, code);
+                    DBG(" MB_CBP: blkcbp=0x%x, code=%d for chunk blk=%d\n", blkcbp, code, block);
 
                     /* Adapt DecNumBlkCBP based on the num_blkcbp value. */
                     if (image->use_clr_fmt==0 || image->use_clr_fmt==4 || image->use_clr_fmt==6) {
@@ -2043,7 +2043,7 @@ void _jxr_w_MB_CBP(jxr_image_t image, struct wbitstream*str,
                         vlc->discriminant += Num_BLKCBP_Delta9[tmp];
                     }
 
-                    DEBUG(" MB_CBP: NUM_BLKCBP=%d, discriminant becomes=%d, \n",
+                    DBG(" MB_CBP: NUM_BLKCBP=%d, discriminant becomes=%d, \n",
                         num_blkcbp, vlc->discriminant);
 
                     /* Encode VAL-1, and CHR_CBP if present. */
@@ -2096,11 +2096,11 @@ void _jxr_w_MB_CBP(jxr_image_t image, struct wbitstream*str,
                                     cbp_chr_U = (diff_cbp[1] >> 4*block) & 0x000f;
                                     cbp_chr_V = (diff_cbp[2] >> 4*block) & 0x000f;
                                     if (blkcbp & 0x10) {
-                                        DEBUG(" MB_CBP: Refined CBP_U=0x%x\n", cbp_chr_U);
+                                        DBG(" MB_CBP: Refined CBP_U=0x%x\n", cbp_chr_U);
                                         w_REFINE_CBP_CHR(image, str, cbp_chr_U);
                                     }
                                     if (blkcbp & 0x20) {
-                                        DEBUG(" MB_CBP: Refined CBP_V=0x%x\n", cbp_chr_V);
+                                        DBG(" MB_CBP: Refined CBP_V=0x%x\n", cbp_chr_V);
                                         w_REFINE_CBP_CHR(image, str, cbp_chr_V);
                                     }
                                     break;
@@ -2111,7 +2111,7 @@ void _jxr_w_MB_CBP(jxr_image_t image, struct wbitstream*str,
         }
     }
 
-    DEBUG(" MB_CBP done tile=[%u %u] mb=[%u %u]\n", tx, ty, mx, my);
+    DBG(" MB_CBP done tile=[%u %u] mb=[%u %u]\n", tx, ty, mx, my);
 }
 
 static void refine_cbp_chr422(jxr_image_t image, struct wbitstream*str, int diff_cbp, int block)
@@ -2195,7 +2195,7 @@ static void refine_cbp_core(jxr_image_t image, struct wbitstream*str, int cbp_ma
 
 static void w_REFINE_CBP(jxr_image_t image, struct wbitstream*str, int cbp_block_mask)
 {
-    DEBUG(" REFINE_CBP: input CBP=%d (0x%x)\n", cbp_block_mask, cbp_block_mask);
+    DBG(" REFINE_CBP: input CBP=%d (0x%x)\n", cbp_block_mask, cbp_block_mask);
 
     int num_cbp = 0;
     int idx;
@@ -2217,7 +2217,7 @@ static void w_REFINE_CBP(jxr_image_t image, struct wbitstream*str, int cbp_block
     int vlc_table = vlc->table;
     assert(vlc_table < 2);
 
-    DEBUG(" REFINE_CBP: num_cbp=%d, vlc table=%d\n", num_cbp, vlc_table);
+    DBG(" REFINE_CBP: num_cbp=%d, vlc table=%d\n", num_cbp, vlc_table);
 
     if (vlc_table == 0) { 
         switch (num_cbp) {
@@ -2258,7 +2258,7 @@ static void w_REFINE_CBP(jxr_image_t image, struct wbitstream*str, int cbp_block
 
 static void w_REFINE_CBP_CHR(jxr_image_t image, struct wbitstream*str, int cbp_block_mask)
 {
-    DEBUG(" REFINE_CBP: input CBP(CHR)= 0x%x)\n", cbp_block_mask);
+    DBG(" REFINE_CBP: input CBP(CHR)= 0x%x)\n", cbp_block_mask);
 
     int num_cbp = 0;
     int idx;
@@ -2276,7 +2276,7 @@ static void w_REFINE_CBP_CHR(jxr_image_t image, struct wbitstream*str, int cbp_b
     /* First encode the NUM_CBP. (The REFINE_CBP in the spec does
     not include this step, but we include it here because it is
     part of the cbp_block_mask encoding.) */
-    DEBUG(" REFINE_CBP(CHR): num_ch_blk=%d\n", num_cbp);
+    DBG(" REFINE_CBP(CHR): num_ch_blk=%d\n", num_cbp);
 
     assert(num_cbp < 4);
     switch (num_cbp) {
@@ -2310,11 +2310,11 @@ int _jxr_w_MB_HP(jxr_image_t image, struct wbitstream*str,
                    struct wbitstream*strFB)
 {
     /* This function can act either as MB_HP() or MB_HP_FLEX() */
-    DEBUG(" MB_HP tile=[%u %u] mb=[%u %u] bitpos=%zu\n",
+    DBG(" MB_HP tile=[%u %u] mb=[%u %u] bitpos=%zu\n",
         tx, ty, mx, my, _jxr_wbitstream_bitpos(str));
 
     if (_jxr_InitContext(image, tx, ty, mx, my)) {
-        DEBUG(" MB_HP: InitContext\n");
+        DBG(" MB_HP: InitContext\n");
         /* This happens only at the top left edge of the tile. */
         _jxr_InitHPVLC(image);
         _jxr_InitializeAdaptiveScanHP(image);
@@ -2347,7 +2347,7 @@ int _jxr_w_MB_HP(jxr_image_t image, struct wbitstream*str,
         unsigned model_bits = MACROBLK_CUR(image,0,tx,mx).hp_model_bits[chroma_flag];
         int cbp = MACROBLK_CUR_HPCBP(image, idx, tx, mx);
         int block;
-        DEBUG(" MB_HP channel=%d, cbp=0x%x, model_bits=%u MBHPMode=%d\n",
+        DBG(" MB_HP channel=%d, cbp=0x%x, model_bits=%u MBHPMode=%d\n",
             idx, cbp, model_bits, mbhp_pred_mode);
         for (block=0 ; block<(nblocks*4) ; block += 1, cbp >>= 1) {
             int bpos = block;
@@ -2359,7 +2359,7 @@ int _jxr_w_MB_HP(jxr_image_t image, struct wbitstream*str,
                 idx, bpos, mbhp_pred_mode,
                 model_bits);
             if (num_nonzero < 0) {
-                DEBUG("ERROR: r_DECODE_BLOCK_ADAPTIVE returned rc=%d\n", num_nonzero);
+                DBG("ERROR: r_DECODE_BLOCK_ADAPTIVE returned rc=%d\n", num_nonzero);
                 return JXR_EC_ERROR;
             }
             if (strFB)
@@ -2373,11 +2373,11 @@ int _jxr_w_MB_HP(jxr_image_t image, struct wbitstream*str,
     }
 
     if (_jxr_ResetContext(image, tx, mx)) {
-        DEBUG(" MB_HP: Run AdaptHP\n");
+        DBG(" MB_HP: Run AdaptHP\n");
         _jxr_AdaptHP(image);
     }
 
-    DEBUG(" MB_HP DONE tile=[%u %u] mb=[%u %u]\n", tx, ty, mx, my);
+    DBG(" MB_HP DONE tile=[%u %u] mb=[%u %u]\n", tx, ty, mx, my);
     return 0;
 }
 
@@ -2398,7 +2398,7 @@ static void w_DECODE_FLEX(jxr_image_t image, struct wbitstream*str,
 
     int flex_ref = coeff & mask;
     coeff &= ~mask;
-    DEBUG(" DECODE_FLEX: coeff=0x%08x, flex_ref=0x%08x\n", coeff, flex_ref);
+    DBG(" DECODE_FLEX: coeff=0x%08x, flex_ref=0x%08x\n", coeff, flex_ref);
 
     _jxr_wbitstream_uintN(str, flex_ref, flexbits);
 
@@ -2421,7 +2421,7 @@ static void w_BLOCK_FLEXBITS(jxr_image_t image, struct wbitstream*str,
     else
         flexbits_left -= image->trim_flexbits;
 
-    DEBUG(" BLOCK_FLEXBITS: flexbits_left=%u (model=%u, trim=%u) block=%u bitpos=%zu\n",
+    DBG(" BLOCK_FLEXBITS: flexbits_left=%u (model=%u, trim=%u) block=%u bitpos=%zu\n",
         flexbits_left, model_bits, image->trim_flexbits, bl, _jxr_wbitstream_bitpos(str));
 
     if (flexbits_left > 0) {
@@ -2432,7 +2432,7 @@ static void w_BLOCK_FLEXBITS(jxr_image_t image, struct wbitstream*str,
         }
     }
 
-    DEBUG(" BLOCK_FLEXBITS done\n");
+    DBG(" BLOCK_FLEXBITS done\n");
 }
 
 static void w_DEC_DC(jxr_image_t image, struct wbitstream*str,
@@ -2443,7 +2443,7 @@ static void w_DEC_DC(jxr_image_t image, struct wbitstream*str,
     int sign_flag = 0;
     int zero_flag = dc_val==0;
 
-    DEBUG(" DEC_DC: DC value is %d (0x%08x)\n", dc_val, dc_val);
+    DBG(" DEC_DC: DC value is %d (0x%08x)\n", dc_val, dc_val);
 
     /* Values are encoded as magnitude/sign, and *not* the 2s
     complement value. So here we get the sign of the value and
@@ -2469,7 +2469,7 @@ static void w_DEC_DC(jxr_image_t image, struct wbitstream*str,
     encode the level. The model_bits are encoded in any case. */
     if (dc_val != 0) {
         assert( is_dc_ch );
-        DEBUG(" DEC_DC: DECODE_ABS_LEVEL = %d (0x%08x)\n", dc_val, dc_val);
+        DBG(" DEC_DC: DECODE_ABS_LEVEL = %d (0x%08x)\n", dc_val, dc_val);
         w_DECODE_ABS_LEVEL(image, str, 0/*DC*/, chroma_flag, dc_val + 1);
     }
 
@@ -2483,7 +2483,7 @@ static void w_DEC_DC(jxr_image_t image, struct wbitstream*str,
 
     /* The sign bit is last. Include it only if the value is nonzero*/
     if (!zero_flag) {
-        DEBUG(" DEC_DC: sign_flag=%s\n", sign_flag? "true":"false");
+        DBG(" DEC_DC: sign_flag=%s\n", sign_flag? "true":"false");
         _jxr_wbitstream_uint1(str, sign_flag);
     }
 }
@@ -2498,7 +2498,7 @@ static void w_DECODE_ABS_LEVEL(jxr_image_t image, struct wbitstream*str,
                                int band, int chroma_flag, uint32_t level)
 {
     int vlc_select = _jxr_vlc_select(band, chroma_flag);
-    DEBUG(" Use vlc_select = %s (table=%d) to encode level index, bitpos=%zu\n",
+    DBG(" Use vlc_select = %s (table=%d) to encode level index, bitpos=%zu\n",
         _jxr_vlc_index_name(vlc_select), image->vlc_table[vlc_select].table,
         _jxr_wbitstream_bitpos(str));
 
@@ -2514,7 +2514,7 @@ static void w_DECODE_ABS_LEVEL(jxr_image_t image, struct wbitstream*str,
         abslevel_index += 1;
     }
 
-    DEBUG(" ABSLEVEL_INDEX = %d\n", abslevel_index);
+    DBG(" ABSLEVEL_INDEX = %d\n", abslevel_index);
     encode_abslevel_index(image, str, abslevel_index, vlc_select);
 
     image->vlc_table[vlc_select].discriminant += _jxr_abslevel_index_delta[abslevel_index];
@@ -2530,7 +2530,7 @@ static void w_DECODE_ABS_LEVEL(jxr_image_t image, struct wbitstream*str,
         int fixedlen = abslevel_fixedlen[abslevel_index];
         uint32_t level_ref = level - abslevel_remap[abslevel_index];
 
-        DEBUG(" ABS_LEVEL = 0x%x (fixed = %d, level_ref = %d)\n",
+        DBG(" ABS_LEVEL = 0x%x (fixed = %d, level_ref = %d)\n",
             level, fixedlen, level_ref);
 
         /* Stack the residual bits... */
@@ -2560,7 +2560,7 @@ static void w_DECODE_ABS_LEVEL(jxr_image_t image, struct wbitstream*str,
 
         assert(level >= ((1U<<fixed) + 2));
         level_ref = level - (1<<fixed) - 2;
-        DEBUG(" ABS_LEVEL = 0x%x (fixed = %d, level_ref = %u\n", level, fixed, level_ref);
+        DBG(" ABS_LEVEL = 0x%x (fixed = %d, level_ref = %u\n", level, fixed, level_ref);
 
         unsigned fixed_tmp = fixed - 4;
         if (fixed_tmp < 15) {
@@ -2678,12 +2678,12 @@ static void w_DECODE_BLOCK(jxr_image_t image, struct wbitstream*str, int band, i
     else
         index_code |= 2<<2;
 
-    DEBUG(" DECODE_BLOCK: chroma_flag=%d, band=%d value=%s%d num_non_zero=%d index_code=0x%x bitpos=%zu\n",
+    DBG(" DECODE_BLOCK: chroma_flag=%d, band=%d value=%s%d num_non_zero=%d index_code=0x%x bitpos=%zu\n",
         chroma_flag, band, sign_flag?"-":"+", value, num_non_zero, index_code, _jxr_wbitstream_bitpos(str));
 
-    DEBUG(" coeff[0] = %d (run)\n", RLCoeffs[0]);
-    DEBUG(" coeff[1] = 0x%x\n", RLCoeffs[1]);
-    DEBUG(" coeff[1*2+0] = %d (run)\n", RLCoeffs[2]);
+    DBG(" coeff[0] = %d (run)\n", RLCoeffs[0]);
+    DBG(" coeff[1] = 0x%x\n", RLCoeffs[1]);
+    DBG(" coeff[1*2+0] = %d (run)\n", RLCoeffs[2]);
 
     int context = (index_code&1) & (index_code>>2);
 
@@ -2692,7 +2692,7 @@ static void w_DECODE_BLOCK(jxr_image_t image, struct wbitstream*str, int band, i
     /* SIGN_FLAG */
     _jxr_wbitstream_uint1(str, sign_flag);
     if (index_code&2) {
-        DEBUG(" DECODE_BLOCK: DECODE_ABS_LEVEL = %d (0x%08x)\n", value, value);
+        DBG(" DECODE_BLOCK: DECODE_ABS_LEVEL = %d (0x%08x)\n", value, value);
         w_DECODE_ABS_LEVEL(image, str, band, context, value);
     }
     if ((index_code&1) == 0) {
@@ -2727,7 +2727,7 @@ static void w_DECODE_BLOCK(jxr_image_t image, struct wbitstream*str, int band, i
         else
             index_code |= 2<<1;
 
-        DEBUG(" DECODE_BLOCK: nz_index=%u, index_code=%x\n", nz_index, index_code);
+        DBG(" DECODE_BLOCK: nz_index=%u, index_code=%x\n", nz_index, index_code);
         w_DECODE_INDEX(image, str, location, chroma_flag, band, context, index_code);
         context &= index_code >> 1;
 
@@ -2843,13 +2843,13 @@ static void w_DECODE_FIRST_INDEX(jxr_image_t image, struct wbitstream*str,
     }
 
     int vlc_table = image->vlc_table[vlc_select].table;
-    DEBUG(" DECODE_FIRST_INDEX: vlc_select = %s, vlc_table = %d, encode 0x%x\n",
+    DBG(" DECODE_FIRST_INDEX: vlc_select = %s, vlc_table = %d, encode 0x%x\n",
         _jxr_vlc_index_name(vlc_select), vlc_table, first_index);
 
     unsigned char bits = first_index_vlc[vlc_table][first_index].bits;
     unsigned char len = first_index_vlc[vlc_table][first_index].len;
 
-    DEBUG(" bits/len = 0x%02x/%u\n", bits, len);
+    DBG(" bits/len = 0x%02x/%u\n", bits, len);
 
     while (len > 0) {
         _jxr_wbitstream_uint1(str, (bits&0x80)? 1 : 0);
@@ -2901,14 +2901,14 @@ static void w_DECODE_INDEX(jxr_image_t image, struct wbitstream*str,
     /* If location>15, then there can't possibly be coefficients
     after the next, so only the low bit need be encoded. */
     if (location > 15) {
-        DEBUG(" DECODE_INDEX: location=%d, index_code=%d\n", location, index_code);
+        DBG(" DECODE_INDEX: location=%d, index_code=%d\n", location, index_code);
         assert(index_code <= 1);
         _jxr_wbitstream_uint1(str, index_code);
         return;
     }
 
     if (location == 15) {
-        DEBUG(" DECODE_INDEX: location=%d, index_code=%d\n", location, index_code);
+        DBG(" DECODE_INDEX: location=%d, index_code=%d\n", location, index_code);
         /* Table 61
         * INDEX2 table
         * 0 0
@@ -2938,7 +2938,7 @@ static void w_DECODE_INDEX(jxr_image_t image, struct wbitstream*str,
     }
 
     int vlc_table = image->vlc_table[vlc_select].table;
-    DEBUG(" DECODE_INDEX: vlc_select = %s, vlc_table = %d chroma_flag=%d, index_code=%d\n",
+    DBG(" DECODE_INDEX: vlc_select = %s, vlc_table = %d chroma_flag=%d, index_code=%d\n",
         _jxr_vlc_index_name(vlc_select), vlc_table, chroma_flag, index_code);
 
     struct encode_table_s{
@@ -2985,7 +2985,7 @@ static void w_DECODE_INDEX(jxr_image_t image, struct wbitstream*str,
     unsigned char bits = index1_vlc[vlc_table][index_code].bits;
     unsigned char len = index1_vlc[vlc_table][index_code].len;
 
-    DEBUG(" bits/len = 0x%02x/%u\n", bits, len);
+    DBG(" bits/len = 0x%02x/%u\n", bits, len);
 
     while (len > 0) {
         _jxr_wbitstream_uint1(str, (bits&0x80)? 1 : 0);
@@ -3005,7 +3005,7 @@ static void w_DECODE_INDEX(jxr_image_t image, struct wbitstream*str,
     image->vlc_table[vlc_select].discriminant += Index1Delta[vlc_delta][index_code];
     image->vlc_table[vlc_select].discriminant2+= Index1Delta[vlc_delta2][index_code];
 
-    DEBUG(" DECODE_INDEX: deltatable/2 = %d/%d, discriminant/2 becomes %d/%d\n",
+    DBG(" DECODE_INDEX: deltatable/2 = %d/%d, discriminant/2 becomes %d/%d\n",
         vlc_delta, vlc_delta2,
         image->vlc_table[vlc_select].discriminant,
         image->vlc_table[vlc_select].discriminant2);
@@ -3016,7 +3016,7 @@ static void w_DECODE_RUN(jxr_image_t image, struct wbitstream*str, int max_run, 
 {
     assert(run > 0);
     if (max_run < 5) {
-        DEBUG(" DECODE_RUN max_run=%d (<5) run=%d, bitpos=%zu\n",
+        DBG(" DECODE_RUN max_run=%d (<5) run=%d, bitpos=%zu\n",
             max_run, run, _jxr_wbitstream_bitpos(str));
 
         switch (max_run) {
@@ -3111,7 +3111,7 @@ static void w_DECODE_RUN(jxr_image_t image, struct wbitstream*str, int max_run, 
             _jxr_wbitstream_uintN(str, run_fixed, fixed);
         }
 
-        DEBUG(" DECODE_RUN max_run=%d run=%d+%d = %d, bitpos=%zu\n",
+        DBG(" DECODE_RUN max_run=%d run=%d+%d = %d, bitpos=%zu\n",
             max_run, use_run, run_fixed, run, _jxr_wbitstream_bitpos(str));
 
         return;
@@ -3133,7 +3133,7 @@ static int w_DECODE_BLOCK_ADAPTIVE(jxr_image_t image, struct wbitstream*str,
     int values[16];
     values[0] = 0;
     int idx;
-    DEBUG(" HP val[tx=%d, mx=%d, block=%d] ==", tx, mx, block);
+    DBG(" HP val[tx=%d, mx=%d, block=%d] ==", tx, mx, block);
     for (idx = 0 ; idx < 15 ; idx += 1) {
         values[1+idx] = MACROBLK_CUR_HP(image,channel,tx,mx,block,idx);
         /* Shift out the model bits. Be careful to note that the
@@ -3144,36 +3144,36 @@ static int w_DECODE_BLOCK_ADAPTIVE(jxr_image_t image, struct wbitstream*str,
             values[1+idx] >>= model_bits;
         else
             values[1+idx] = - ( (-values[1+idx]) >> model_bits );
-        DEBUG(" 0x%x", values[1+idx]);
+        DBG(" 0x%x", values[1+idx]);
     }
-    DEBUG("\n");
+    DBG("\n");
 
     int values2[16];
     values2[0] = 0;
     AdaptiveHPPermute(image, values2, values, mbhp_pred_mode);
-#if defined(DETAILED_DEBUG)
+#if defined(DETAILED_DBG)
     {
         int k;
-        DEBUG(" adapted hor scan order (MBHPMode=%d) ==", mbhp_pred_mode);
+        DBG(" adapted hor scan order (MBHPMode=%d) ==", mbhp_pred_mode);
         for (k = 0 ; k<15; k+=1) {
-            DEBUG(" %2d", image->hipass_hor_scanorder[k]);
+            DBG(" %2d", image->hipass_hor_scanorder[k]);
         }
-        DEBUG("\n");
-        DEBUG(" adapted hor scan totals ==");
+        DBG("\n");
+        DBG(" adapted hor scan totals ==");
         for (k = 0 ; k<15; k+=1) {
-            DEBUG(" %2d", image->hipass_hor_scantotals[k]);
+            DBG(" %2d", image->hipass_hor_scantotals[k]);
         }
-        DEBUG("\n");
-        DEBUG(" adapted ver scan order (MBHPMode=%d) ==", mbhp_pred_mode);
+        DBG("\n");
+        DBG(" adapted ver scan order (MBHPMode=%d) ==", mbhp_pred_mode);
         for (k = 0 ; k<15; k+=1) {
-            DEBUG(" %2d", image->hipass_ver_scanorder[k]);
+            DBG(" %2d", image->hipass_ver_scanorder[k]);
         }
-        DEBUG("\n");
-        DEBUG(" adapted ver scan totals ==");
+        DBG("\n");
+        DBG(" adapted ver scan totals ==");
         for (k = 0 ; k<15; k+=1) {
-            DEBUG(" %2d", image->hipass_ver_scantotals[k]);
+            DBG(" %2d", image->hipass_ver_scantotals[k]);
         }
-        DEBUG("\n");
+        DBG("\n");
     }
 #endif
 
@@ -3218,7 +3218,7 @@ static int w_DECODE_BLOCK_ADAPTIVE(jxr_image_t image, struct wbitstream*str,
 * Reference Software v1.5 updates.
 *
 * Revision 1.25 2008/03/24 18:06:56 steve
-* Imrpove DEBUG messages around quantization.
+* Imrpove DBG messages around quantization.
 *
 * Revision 1.24 2008/03/21 18:05:53 steve
 * Proper CMYK formatting on input.
