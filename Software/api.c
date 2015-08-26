@@ -130,6 +130,11 @@ int jxr_get_CONTAINER_CHANNELS(jxr_image_t image)
   return image->container_nc;
 }
 
+int jxr_get_CONTAINER_BPC(jxr_image_t image)
+{
+  return image->container_bpc;
+}
+
 /*
 ** Return an indicator whether we are currently decoding a separate alpha
 ** channel. Returns 0 in case the primary channels are decoded, returns 1
