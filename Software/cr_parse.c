@@ -78,7 +78,46 @@
 # include <stdlib.h>
 # include <assert.h>
 
-static int read_ifd(jxr_container_t container, FILE*fd, int image_number, uint32_t*ifd_next);
+typedef struct MEMFILE
+{
+  FILE *file;
+  unsigned char *start, *pos, *end;
+} MEMFILE;
+
+static size_t mfread(void *ptr, size_t size, size_t nmemb, MEMFILE *fm)
+{
+  if (fm->file)
+    return fread(ptr, size, nmemb, fm->file);
+  else {
+    int n = size * nmemb;
+    if (fm->pos + n > fm->end)
+      n = fm->end - fm->pos;
+    memmove(ptr, fm->pos, n);
+    fm->pos += n;
+    return n / size;
+  }
+}
+
+static int mfseek(MEMFILE *fm, int offset, int whence)
+{
+  if (fm->file)
+    return fseek(fm->file, offset, whence);
+  else {
+    unsigned char *p;
+    if (whence == SEEK_SET)
+      p = fm->start + offset;
+    else if (whence == SEEK_CUR)
+      p = fm->pos + offset;
+    else if (whence == SEEK_END)
+      p = fm->end + offset;
+    if (p < fm->start || p > fm->end)
+      return -1;
+    fm->pos = p;
+    return 0;
+  }
+}
+
+static int read_ifd(jxr_container_t container, MEMFILE*fm, int image_number, uint32_t*ifd_next);
 
 jxr_container_t jxr_create_container(void)
 {
@@ -138,12 +177,12 @@ void jxr_destroy_container(jxr_container_t container)
   free(container);
 }
 
-int jxr_read_image_container(jxr_container_t container, FILE*fd)
+static int _jxr_read_image_container_aux(jxr_container_t container, MEMFILE*fm)
 {
     unsigned char buf[4];
     size_t rc;
 
-    rc = fread(buf, 1, 4, fd);
+    rc = mfread(buf, 1, 4, fm);
     if (rc < 4)
         return JXR_EC_BADMAGIC;
 
@@ -152,7 +191,7 @@ int jxr_read_image_container(jxr_container_t container, FILE*fd)
     if (buf[2] != 0xbc) return JXR_EC_BADMAGIC;
     if (buf[3] > 0x01) return JXR_EC_BADMAGIC; /* Version. */
 
-    rc = fread(buf, 1, 4, fd);
+    rc = mfread(buf, 1, 4, fm);
     if (rc != 4) return JXR_EC_IO;
 
     uint32_t ifd_off = (buf[3] << 24) + (buf[2]<<16) + (buf[1]<<8) + (buf[0]<<0);
@@ -167,14 +206,31 @@ int jxr_read_image_container(jxr_container_t container, FILE*fd)
 
         uint32_t ifd_next;
         if (ifd_off & 0x1) return JXR_EC_IO;
-        rc = fseek(fd, ifd_off, SEEK_SET);
-        rc = read_ifd(container, fd, container->image_count-1, &ifd_next);
+        rc = mfseek(fm, ifd_off, SEEK_SET);
+        rc = read_ifd(container, fm, container->image_count-1, &ifd_next);
         if (rc < 0) return (int) rc;
 
         ifd_off = ifd_next;
     }
 
     return 0;
+}
+
+int jxr_read_image_container(jxr_container_t container, FILE*fd)
+{
+  MEMFILE fm;
+  fm.file = fd;
+  fm.start = fm.pos = fm.end = NULL;
+  return _jxr_read_image_container_aux(container, &fm);
+}
+
+int jxr_read_image_container_memory(jxr_container_t container, unsigned char *data, int size)
+{
+  MEMFILE fm;
+  fm.file = NULL;
+  fm.start = fm.pos = data;
+  fm.end = fm.start + size;
+  return _jxr_read_image_container_aux(container, &fm);
 }
 
 int jxrc_image_count(jxr_container_t container)
@@ -1163,7 +1219,7 @@ uint32_t bytes4_to_off(uint8_t*bp)
     return (bp[3]<<24) + (bp[2]<<16) + (bp[1]<<8) + (bp[0]);
 }
 
-static int read_ifd(jxr_container_t container, FILE*fd, int image_number, uint32_t*ifd_next)
+static int read_ifd(jxr_container_t container, MEMFILE*fm, int image_number, uint32_t*ifd_next)
 {
     *ifd_next = 0;
 
@@ -1174,7 +1230,7 @@ static int read_ifd(jxr_container_t container, FILE*fd, int image_number, uint32
     int alpha_tag_check = 0;
     uint32_t ifd_off;
 
-    rc = fread(buf, 1, 2, fd);
+    rc = mfread(buf, 1, 2, fm);
     if (rc != 2) return -1;
 
     uint16_t entry_count = (buf[1]<<8) + (buf[0]<<0);
@@ -1190,7 +1246,7 @@ static int read_ifd(jxr_container_t container, FILE*fd, int image_number, uint32
     through the types later and interpret the values more
     precisely. */
     for (idx = 0 ; idx < entry_count ; idx += 1) {
-        rc = fread(buf, 1, 12, fd);
+        rc = mfread(buf, 1, 12, fm);
         assert(rc == 12);
 
         uint16_t ifd_tag = (buf[1]<<8) + (buf[0]<<0);
@@ -1220,7 +1276,7 @@ static int read_ifd(jxr_container_t container, FILE*fd, int image_number, uint32
     /* verify alpha ifd tags appear only in allowed combinations */
     assert(alpha_tag_check == 0 || alpha_tag_check == 3 || alpha_tag_check == 7);
 
-    rc = fread(buf, 1, 4, fd);
+    rc = mfread(buf, 1, 4, fm);
     assert(rc == 4);
 
     /* Now interpret the tag types/values for easy access later. */
@@ -1235,9 +1291,9 @@ static int read_ifd(jxr_container_t container, FILE*fd, int image_number, uint32
             if (cur[idx].cnt > 4) {
                 ifd_off = bytes4_to_off(cur[idx].value_.v_byte);
                 assert((ifd_off & 1) == 0);
-                fseek(fd, ifd_off, SEEK_SET);
+                mfseek(fm, ifd_off, SEEK_SET);
                 cur[idx].value_.p_byte = (uint8_t*)malloc(cur[idx].cnt);
-                fread(cur[idx].value_.p_byte, 1, cur[idx].cnt, fd);
+                mfread(cur[idx].value_.p_byte, 1, cur[idx].cnt, fm);
 #if defined(DETAILED_DBG)
                 int bb;
                 for (bb = 0 ; bb < cur[idx].cnt ; bb += 1)
@@ -1270,7 +1326,7 @@ static int read_ifd(jxr_container_t container, FILE*fd, int image_number, uint32
             } else {
                 ifd_off = bytes4_to_off(cur[idx].value_.v_byte);
                 assert((ifd_off & 1) == 0);
-                fseek(fd, ifd_off, SEEK_SET);
+                mfseek(fm, ifd_off, SEEK_SET);
                 cur[idx].value_.p_short = (uint16_t*) calloc(cur[idx].cnt, sizeof(uint16_t));
 
                 DBG("Container %d: tag 0x%04x SHORT\n", image_number,
@@ -1278,7 +1334,7 @@ static int read_ifd(jxr_container_t container, FILE*fd, int image_number, uint32
                 uint16_t cdx;
                 for (cdx = 0 ; cdx < cur[idx].cnt ; cdx += 1) {
                     uint8_t buf[2];
-                    fread(buf, 1, 2, fd);
+                    mfread(buf, 1, 2, fm);
                     cur[idx].value_.p_short[cdx] = bytes2_to_off(buf);
                     DBG(" %u", cur[idx].value_.p_short[cdx]);
                 }
@@ -1296,7 +1352,7 @@ static int read_ifd(jxr_container_t container, FILE*fd, int image_number, uint32
             } else {
                 ifd_off = bytes4_to_off(cur[idx].value_.v_byte);
                 assert((ifd_off & 1) == 0);
-                fseek(fd, ifd_off, SEEK_SET);
+                mfseek(fm, ifd_off, SEEK_SET);
                 cur[idx].value_.p_long = (uint32_t*) calloc(cur[idx].cnt, sizeof(uint32_t));
 
                 DBG("Container %d: tag 0x%04x LONG\n", image_number,
@@ -1304,7 +1360,7 @@ static int read_ifd(jxr_container_t container, FILE*fd, int image_number, uint32
                 uint32_t cdx;
                 for (cdx = 0 ; cdx < cur[idx].cnt ; cdx += 1) {
                     uint8_t buf[4];
-                    fread(buf, 1, 4, fd);
+                    mfread(buf, 1, 4, fm);
                     cur[idx].value_.p_long[cdx] = bytes4_to_off(buf);
                     DBG(" %u", cur[idx].value_.p_long[cdx]);
                 }
@@ -1318,7 +1374,7 @@ static int read_ifd(jxr_container_t container, FILE*fd, int image_number, uint32
             /* Always offset */
             ifd_off = bytes4_to_off(cur[idx].value_.v_byte);
             assert((ifd_off & 1) == 0);
-            fseek(fd, ifd_off, SEEK_SET);
+            mfseek(fm, ifd_off, SEEK_SET);
             cur[idx].value_.p_rational = (uint64_t*) calloc(cur[idx].cnt, sizeof(uint64_t));
 
             DBG("Container %d: tag 0x%04x LONG\n", image_number,
@@ -1326,9 +1382,9 @@ static int read_ifd(jxr_container_t container, FILE*fd, int image_number, uint32
             uint64_t cdx;
             for (cdx = 0 ; cdx < cur[idx].cnt ; cdx += 1) {
                 uint8_t buf[4];
-                fread(buf, 1, 4, fd);
+                mfread(buf, 1, 4, fm);
                 cur[idx].value_.p_long[2 * cdx + 0] = bytes4_to_off(buf);
-                fread(buf, 1, 4, fd);
+                mfread(buf, 1, 4, fm);
                 cur[idx].value_.p_long[2 * cdx + 1] = bytes4_to_off(buf);
                 DBG(" %u", cur[idx].value_.p_rational[cdx]);
             }
