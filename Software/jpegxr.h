@@ -408,6 +408,7 @@ JXR_EXTERN int jxr_get_IMAGE_CHANNELS(jxr_image_t image);
 ** and thus everything but the first channel is missing. Bummer!
 */
 JXR_EXTERN int jxr_get_CONTAINER_CHANNELS(jxr_image_t image);
+JXR_EXTERN int jxr_get_CONTAINER_BPC(jxr_image_t image);
 JXR_EXTERN int jxr_get_TILING_FLAG(jxr_image_t image);
 JXR_EXTERN int jxr_get_FREQUENCY_MODE_CODESTREAM_FLAG(jxr_image_t image);
 JXR_EXTERN unsigned jxr_get_TILE_COLUMNS(jxr_image_t image);
