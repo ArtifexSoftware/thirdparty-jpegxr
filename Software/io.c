@@ -83,6 +83,16 @@ void _jxr_rbitstream_initialize(struct rbitstream*str, FILE*fd)
     str->read_count = 0;
 }
 
+void _jxr_rbitstream_initialize_memory(struct rbitstream*str, void *data, int size, long offset)
+{
+    str->bits_avail = 0;
+    str->data = data;
+    str->size = size;
+    str->cur = offset;
+    str->read_count = 0;
+    str->fd = NULL;
+}
+
 size_t _jxr_rbitstream_bitpos(struct rbitstream*str)
 {
     return str->read_count*8 - str->bits_avail;
@@ -91,7 +101,10 @@ size_t _jxr_rbitstream_bitpos(struct rbitstream*str)
 void _jxr_rbitstream_mark(struct rbitstream*str)
 {
     assert(str->bits_avail == 0);
-    str->mark_stream_position = ftell(str->fd);
+    if (str->fd)
+	str->mark_stream_position = ftell(str->fd);
+    else
+	str->mark_stream_position = str->cur;
     assert(str->mark_stream_position >= 0);
     str->read_count = 0;
 }
@@ -100,7 +113,16 @@ void _jxr_rbitstream_seek(struct rbitstream*str, uint64_t off)
 {
     assert(str->bits_avail == 0);
     /* NOTE: Should be using fseek64? */
-    int rc = fseek(str->fd, str->mark_stream_position + (long)off, SEEK_SET);
+    int rc;
+    if (str->fd)
+	rc = fseek(str->fd, str->mark_stream_position + (long)off, SEEK_SET);
+    else if (str->mark_stream_position + (long)off >= str->size)
+	rc = -1;
+    else
+    {
+	str->cur = str->mark_stream_position + (long)off;
+	rc = 0;
+    }
     str->read_count = (size_t) off;
     assert(rc >= 0);
 }
@@ -123,7 +145,12 @@ static int get_byte(struct rbitstream*str)
 {
     int tmp;
     assert(str->bits_avail == 0);
-    tmp = fgetc(str->fd);
+    if (str->fd)
+	tmp = fgetc(str->fd);
+    else if (str->cur >= str->size)
+	tmp = EOF;
+    else
+	tmp = str->data[str->cur++];
     if (tmp == EOF)
         return EOF;
 

@@ -223,6 +223,106 @@ int jxr_read_image_bitstream(jxr_image_t image, FILE*fd)
     return rc;
 }
 
+int jxr_read_image_bitstream_memory(jxr_image_t image, void *data, int size, long offset)
+{
+    int rc;
+    struct rbitstream bits;
+    _jxr_rbitstream_initialize_memory(&bits, data, size, offset);
+
+    /* Image header for the image overall */
+    rc = r_image_header(image, &bits);
+    if (rc < 0) return rc;
+
+    /* Image plane. */
+    rc = r_image_plane_header(image, &bits, 0);
+    if (rc < 0) return rc;
+
+    /* Make image structures that need header details. */
+    _jxr_make_mbstore(image, 0);
+
+    /* If there is an alpa channel, process the image place header
+    for it. */
+    if (ALPHACHANNEL_FLAG(image)) {
+        int ch;
+
+        image->alpha = jxr_create_input();
+        *image->alpha = *image;
+
+        rc = r_image_plane_header(image->alpha, &bits, 1);
+        if (rc < 0) return rc;
+
+        for(ch = 0; ch < image->num_channels; ch ++)
+            memset(&image->alpha->strip[ch], 0, sizeof(image->alpha->strip[ch]));
+
+        _jxr_make_mbstore(image->alpha, 0);
+        image->alpha->primary = 0;
+    }
+
+    rc = r_INDEX_TABLE(image, &bits);
+    if (rc < 0)
+      return rc;
+
+    /* Store command line input values for later comparison */
+    uint8_t input_profile = image->profile_idc;
+    uint8_t input_level = image->level_idc;
+
+    /* inferred value as per Appendix B */
+    image->profile_idc = 111;
+    image->level_idc = 255;
+
+    int64_t subsequent_bytes = _jxr_rbitstream_intVLW(&bits);
+    DBG(" Subsequent bytes with %ld bytes\n", subsequent_bytes);
+    if (subsequent_bytes > 0) {
+      int64_t read_bytes = 0;
+      if (subsequent_bytes >= 4) {
+        read_bytes = r_PROFILE_LEVEL_INFO(image,&bits);
+	if (read_bytes > subsequent_bytes) {
+	  /* THOR: Invalid profile information, bail out. */
+	  return JXR_EC_BADFORMAT;
+	}
+      }
+      int64_t additional_bytes = subsequent_bytes - read_bytes;
+      int64_t idx;
+      for (idx = 0 ; idx < additional_bytes ; idx += 1) {
+	_jxr_rbitstream_uint8(&bits); /* RESERVED_A_BYTE */
+      }
+    }
+
+    assert(image->profile_idc <= input_profile);
+    assert(image->level_idc <= input_level);
+
+    rc = jxr_test_PROFILE_IDC(image, 1);
+    if (rc < 0) {
+      fprintf(stderr,"*** WARNING: image profile not indicated correctly ***\n");
+    }
+
+    rc = jxr_test_LEVEL_IDC(image, 1);
+    if (rc < 0) {
+      fprintf(stderr,"*** WARNING: image level not indicated correctly ***\n");
+    }
+
+    DBG("MARK HERE as the tile base. bitpos=%zu\n", _jxr_rbitstream_bitpos(&bits));
+    _jxr_rbitstream_mark(&bits);
+
+    /* The image data is in a TILE element even if there is no
+    tiling. No tiling just means 1 big tile. */
+    rc = r_TILE(image, &bits);
+
+    DBG("Consumed %zu bytes of the bitstream\n", bits.read_count);
+
+#ifdef VERIFY_16BIT
+    if(image->lwf_test == 0)
+        DBG("Meet conditions for LONG_WORD_FLAG == 0!");
+    else {
+        DBG("Don't meet conditions for LONG_WORD_FLAG == 0!");
+        if (LONG_WORD_FLAG(image) == 0)
+            return JXR_EC_BADFORMAT;
+    }
+#endif
+
+    return rc;
+}
+
 /*
 ** Added by thor April 2nd 2010: stripe by stripe decoding.
 */
