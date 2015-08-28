@@ -123,18 +123,16 @@ static int get_num_ch_blk(struct rbitstream*str);
 
 
 
-int jxr_read_image_bitstream(jxr_image_t image, FILE*fd)
+int _jxr_read_image_bitstream_aux(jxr_image_t image, struct rbitstream *bits)
 {
     int rc;
-    struct rbitstream bits;
-    _jxr_rbitstream_initialize(&bits, fd);
 
     /* Image header for the image overall */
-    rc = r_image_header(image, &bits);
+    rc = r_image_header(image, bits);
     if (rc < 0) return rc;
 
     /* Image plane. */
-    rc = r_image_plane_header(image, &bits, 0);
+    rc = r_image_plane_header(image, bits, 0);
     if (rc < 0) return rc;
 
     /* Make image structures that need header details. */
@@ -148,7 +146,7 @@ int jxr_read_image_bitstream(jxr_image_t image, FILE*fd)
         image->alpha = jxr_create_input();
         *image->alpha = *image;
 
-        rc = r_image_plane_header(image->alpha, &bits, 1);
+        rc = r_image_plane_header(image->alpha, bits, 1);
         if (rc < 0) return rc;
 
         for(ch = 0; ch < image->num_channels; ch ++)
@@ -158,7 +156,7 @@ int jxr_read_image_bitstream(jxr_image_t image, FILE*fd)
         image->alpha->primary = 0;
     }
 
-    rc = r_INDEX_TABLE(image, &bits);
+    rc = r_INDEX_TABLE(image, bits);
     if (rc < 0)
       return rc;
 
@@ -170,12 +168,12 @@ int jxr_read_image_bitstream(jxr_image_t image, FILE*fd)
     image->profile_idc = 111; 
     image->level_idc = 255;
 
-    int64_t subsequent_bytes = _jxr_rbitstream_intVLW(&bits);
+    int64_t subsequent_bytes = _jxr_rbitstream_intVLW(bits);
     DBG(" Subsequent bytes with %ld bytes\n", subsequent_bytes);
     if (subsequent_bytes > 0) {
       int64_t read_bytes = 0;
       if (subsequent_bytes >= 4) {
-        read_bytes = r_PROFILE_LEVEL_INFO(image,&bits);
+        read_bytes = r_PROFILE_LEVEL_INFO(image,bits);
 	if (read_bytes > subsequent_bytes) {
 	  /* THOR: Invalid profile information, bail out. */
 	  return JXR_EC_BADFORMAT;
@@ -184,7 +182,7 @@ int jxr_read_image_bitstream(jxr_image_t image, FILE*fd)
       int64_t additional_bytes = subsequent_bytes - read_bytes;
       int64_t idx;
       for (idx = 0 ; idx < additional_bytes ; idx += 1) {
-	_jxr_rbitstream_uint8(&bits); /* RESERVED_A_BYTE */
+	_jxr_rbitstream_uint8(bits); /* RESERVED_A_BYTE */
       }
     }
 
@@ -201,12 +199,12 @@ int jxr_read_image_bitstream(jxr_image_t image, FILE*fd)
       fprintf(stderr,"*** WARNING: image level not indicated correctly ***\n");
     }
 
-    DBG("MARK HERE as the tile base. bitpos=%zu\n", _jxr_rbitstream_bitpos(&bits));
-    _jxr_rbitstream_mark(&bits);
+    DBG("MARK HERE as the tile base. bitpos=%zu\n", _jxr_rbitstream_bitpos(bits));
+    _jxr_rbitstream_mark(bits);
 
     /* The image data is in a TILE element even if there is no
     tiling. No tiling just means 1 big tile. */
-    rc = r_TILE(image, &bits);
+    rc = r_TILE(image, bits);
 
     DBG("Consumed %zu bytes of the bitstream\n", bits.read_count);
 
@@ -223,8 +221,18 @@ int jxr_read_image_bitstream(jxr_image_t image, FILE*fd)
     return rc;
 }
 
-int jxr_read_image_bitstream_memory(jxr_image_t image, void *data, int size, long offset)
+int jxr_read_image_bitstream(jxr_image_t image, FILE*fd)
 {
+    struct rbitstream bits;
+    _jxr_rbitstream_initialize(&bits, fd);
+    return _jxr_read_image_bitstream_aux(image, &bits);
+}
+
+int jxr_read_image_bitstream_memory(jxr_image_t image, unsigned char *data, int size)
+{
+  struct rbitstream bits;
+  _jxr_rbitstream_initialize_memory(&bits, data, size);
+  return _jxr_read_image_bitstream_aux(image, &bits);
 }
 
 /*

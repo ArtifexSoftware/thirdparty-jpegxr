@@ -83,12 +83,12 @@ void _jxr_rbitstream_initialize(struct rbitstream*str, FILE*fd)
     str->read_count = 0;
 }
 
-void _jxr_rbitstream_initialize_memory(struct rbitstream*str, void *data, int size, long offset)
+void _jxr_rbitstream_initialize_memory(struct rbitstream*str, unsigned char *data, int size)
 {
     str->bits_avail = 0;
     str->data = data;
     str->size = size;
-    str->cur = offset;
+    str->pos = 0;
     str->read_count = 0;
     str->fd = NULL;
 }
@@ -104,7 +104,7 @@ void _jxr_rbitstream_mark(struct rbitstream*str)
     if (str->fd)
 	str->mark_stream_position = ftell(str->fd);
     else
-	str->mark_stream_position = str->cur;
+	str->mark_stream_position = str->pos;
     assert(str->mark_stream_position >= 0);
     str->read_count = 0;
 }
@@ -120,7 +120,7 @@ void _jxr_rbitstream_seek(struct rbitstream*str, uint64_t off)
 	rc = -1;
     else
     {
-	str->cur = str->mark_stream_position + (long)off;
+	str->pos = str->mark_stream_position + (long)off;
 	rc = 0;
     }
     str->read_count = (size_t) off;
@@ -147,10 +147,10 @@ static int get_byte(struct rbitstream*str)
     assert(str->bits_avail == 0);
     if (str->fd)
 	tmp = fgetc(str->fd);
-    else if (str->cur >= str->size)
+    else if (str->pos >= str->size)
 	tmp = EOF;
     else
-	tmp = str->data[str->cur++];
+	tmp = str->data[str->pos++];
     if (tmp == EOF)
         return EOF;
 

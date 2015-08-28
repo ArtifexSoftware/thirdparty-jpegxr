@@ -207,7 +207,7 @@ typedef enum JXRC_GUID_e{
 * container. Perhaps it is a bitstream?
 */
 JXR_EXTERN int jxr_read_image_container(jxr_container_t c, FILE*fd);
-JXR_EXTERN int jxr_read_image_container_memory(jxr_container_t c, void *data, int size);
+JXR_EXTERN int jxr_read_image_container_memory(jxr_container_t c, unsigned char *data, int size);
 
 /*
 * jxr_c_image_count returns the number of images in this
@@ -742,7 +742,7 @@ JXR_EXTERN void jxr_set_pixel_format(jxr_image_t image, jxrc_t_pixelFormat pixel
 * bitstream.
 */
 JXR_EXTERN int jxr_read_image_bitstream(jxr_image_t image, FILE*fd);
-JXR_EXTERN int jxr_read_image_bitstream_memory(jxr_image_t image, void *data, int size, long offset);
+JXR_EXTERN int jxr_read_image_bitstream_memory(jxr_image_t image, unsigned char *data, int size);
 
 /*
 ** thor: Added April 2nd 2010: Initialize for stripe by stripe reading.

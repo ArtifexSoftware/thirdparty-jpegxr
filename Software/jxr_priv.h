@@ -142,7 +142,7 @@ struct rbitstream{
     FILE*fd;
     unsigned char *data;
     int size;
-    int cur;
+    int pos;
 
     long mark_stream_position;
 };
@@ -466,7 +466,7 @@ extern void _jxr_send_mb_to_output(jxr_image_t image, int mx, int my, int*data);
 
 /* Get the current *bit* position, for diagnostic use. */
 extern void _jxr_rbitstream_initialize(struct rbitstream*str, FILE*fd);
-extern void _jxr_rbitstream_initialize_memory(struct rbitstream*str, void *data, int size, long offset);
+extern void _jxr_rbitstream_initialize_memory(struct rbitstream*str, unsigned char *data, int size);
 extern size_t _jxr_rbitstream_bitpos(struct rbitstream*str);
 
 extern void _jxr_rbitstream_syncbyte(struct rbitstream*str);
