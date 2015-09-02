@@ -441,6 +441,7 @@ void jxr_destroy(jxr_image_t image)
 
         for (idx = 0 ; idx < plane->num_channels ; idx += 1) {
             if (plane->mb_row_buffer[idx]) {
+                free(plane->mb_row_buffer[idx][0].pred_dclp);
                 free(plane->mb_row_buffer[idx][0].data);
                 free(plane->mb_row_buffer[idx]);
             }
