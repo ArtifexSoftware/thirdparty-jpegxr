@@ -87,7 +87,7 @@ minimal typedefs that we need. */
 #endif
 
 /* define this to check if range of values exceeds signed 16-bit */
-#define VERIFY_16BIT
+#define noVERIFY_16BIT
 
 #ifdef VERIFY_16BIT
 #define CHECK1(flag, a) if(((a) < -0x8000) || ((a) >= 0x8000)) flag = 1
