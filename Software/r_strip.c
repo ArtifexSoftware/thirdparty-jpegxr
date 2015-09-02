@@ -362,8 +362,11 @@ static void overlap_level1_up2_444(jxr_image_t image, int use_my, int ch)
 
     int ty = 0;
     /* Figure out which tile row the current strip of macroblocks belongs to. */
-    while(top_my > image->tile_row_position[ty]+image->tile_row_height[ty] - 1)
-        ty++;
+    if (top_my >= image->tile_row_position[image->tile_rows - 1]+image->tile_row_height[image->tile_rows - 1])
+        ty = image->tile_rows - 1;
+    else
+        while(top_my > image->tile_row_position[ty]+image->tile_row_height[ty] - 1)
+            ty++;
 
     for(tx = 0; tx < image->tile_columns; tx++)
     {
@@ -486,9 +489,11 @@ static void overlap_level1_up2_422(jxr_image_t image, int use_my, int ch)
 
     int ty = 0;
     /* Figure out which tile row the current strip of macroblocks belongs to. */
-    while(top_my > image->tile_row_position[ty]+image->tile_row_height[ty] - 1)
-        ty++;
-
+    if (top_my >= image->tile_row_position[image->tile_rows - 1]+image->tile_row_height[image->tile_rows - 1])
+        ty = image->tile_rows - 1;
+    else
+        while(top_my > image->tile_row_position[ty]+image->tile_row_height[ty] - 1)
+            ty++;
 
     /* Top edge */
     if(top_my == 0 || (image->disableTileOverlapFlag && TOP_Y(top_my)))
@@ -698,8 +703,11 @@ static void overlap_level1_up2_420(jxr_image_t image, int use_my, int ch)
     int idx;
     int ty = 0;
     /* Figure out which tile row the current strip of macroblocks belongs to. */
-    while(top_my > image->tile_row_position[ty]+image->tile_row_height[ty] - 1)
-        ty++;
+    if (top_my >= image->tile_row_position[image->tile_rows - 1]+image->tile_row_height[image->tile_rows - 1])
+        ty = image->tile_rows - 1;
+    else
+        while(top_my > image->tile_row_position[ty]+image->tile_row_height[ty] - 1)
+            ty++;
 
     if(top_my == 0 || (image->disableTileOverlapFlag && TOP_Y(top_my)))
     {
@@ -914,8 +922,11 @@ static void overlap_level2_up3_444(jxr_image_t image, int use_my, int ch)
 
     int ty = 0;
     /* Figure out which tile row the current strip of macroblocks belongs to. */
-    while(top_my > image->tile_row_position[ty]+image->tile_row_height[ty] - 1)
-        ty++;
+    if (top_my >= image->tile_row_position[image->tile_rows - 1]+image->tile_row_height[image->tile_rows - 1])
+        ty = image->tile_rows - 1;
+    else
+        while(top_my > image->tile_row_position[ty]+image->tile_row_height[ty] - 1)
+            ty++;
 
     for(tx = 0; tx < image->tile_columns; tx++)
     {
@@ -1117,10 +1128,11 @@ static void overlap_level2_up3_422(jxr_image_t image, int use_my, int ch)
 
     int ty = 0;
     /* Figure out which tile row the current strip of macroblocks belongs to. */
-    while(top_my > image->tile_row_position[ty]+image->tile_row_height[ty] - 1)
-        ty++;
-
-
+    if (top_my >= image->tile_row_position[image->tile_rows - 1]+image->tile_row_height[image->tile_rows - 1])
+        ty = image->tile_rows - 1;
+    else
+        while(top_my > image->tile_row_position[ty]+image->tile_row_height[ty] - 1)
+            ty++;
 
     for(tx = 0; tx < image->tile_columns; tx++)
     {
@@ -1317,8 +1329,11 @@ static void overlap_level2_up3_420(jxr_image_t image, int use_my, int ch)
     int ty = 0;
 
     /* Figure out which tile row the current strip of macroblocks belongs to. */
-    while(top_my > image->tile_row_position[ty]+image->tile_row_height[ty] - 1)
-        ty++;
+    if (top_my >= image->tile_row_position[image->tile_rows - 1]+image->tile_row_height[image->tile_rows - 1])
+        ty = image->tile_rows - 1;
+    else
+        while(top_my > image->tile_row_position[ty]+image->tile_row_height[ty] - 1)
+            ty++;
 
     for(tx = 0; tx < image->tile_columns; tx++)
     {
